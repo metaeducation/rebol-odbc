@@ -76,15 +76,10 @@ matrix:
             - libodbc1  # for getting libodbc.so.2
             - unixodbc-dev  # for compiling the ODBC extension
             - libzmq3-dev  # for ZeroMQ extension
-            #
-            # !!! In theory we should be able to use the stock tcc here.
-            # In practice, there's something wrong with the variadics in
-            # this old Linux.  So we have to build a newer tcc ourselves
-            #
-            #- libtcc-dev  # for being able to `-ltcc` for compilation API
-            #- tcc  # tcc executable (unused), but gets libtcc1.a + tcc headers
             - libffi-dev
-            # - mysql-server  # later version already installed (?)
+            # - mysql-server  # earlier version (5) installed by default
+            - sqlite3
+            - libsqliteodbc
 
     # [2] OSX x64, debug, clang++
     #
@@ -149,6 +144,11 @@ install:
       brew install sqliteodbc
     fi
 
+  # MYSQL SETUP
+  #
+  # While PostgreSQL might be a more "interesting" database than MySQL,
+  # there is greater popularity of MySQL on Linux.  It makes sense to use as
+  # a first test.
   - |
     if [[ $OS_ID = 0.4.40 ]]; then
 
@@ -161,11 +161,6 @@ install:
       done
       echo "...and it seems that 'services: mysql' has started."
 
-      # While PostgreSQL might be a more "interesting" database than MySQL,
-      # there is greater popularity of MySQL on Linux.  With ODBC not a
-      # major priority for the Ren-C project, it makes sense to go with the
-      # distribution that is vetted by the most people.
-      #
       # Turnkey installation for MySQL's ODBC driver is available for Red Hat
       # Linux, but not Debian.  We follow the tarball installation method:
       #
@@ -213,13 +208,50 @@ install:
       #
       echo "CREATE DATABASE test" | mysql --host=localhost --user=test --password=test-password
 
-      # Register that DSN.  The `odbc://Rebol` syntax for naming a DSN is
-      # Rebol-specific, typically it would just be `Rebol` in a context that
-      # knows a DSN is supposed to be in that position.
+      # Register that DSN.  The `odbc://rebol-mysql` syntax for naming a DSN
+      # is Rebol-specific, typically it would just be `Rebol` in a context
+      # that knows a DSN is supposed to be in that position.
       #
-      sudo myodbc-installer -s -a -c2 -n "Rebol" \
+      # NOTE: if you have problems with `localhost` saying can't connect with
+      # socket /tmp/mysql.sock, and you are sure the mysql daemon is running,
+      # then on some Linux installations using `127.0.0.1` instead can help
+      # force not to go through a socket.  That doesn't solve the problem if
+      # you actually want to talk to a database over a network, but is good
+      # enough for this test (and other purposes).
+      #
+      sudo myodbc-installer -s -a -c2 -n "rebol-mysql" \
           -t "DRIVER=MySQL ODBC ${MYODBC_VERSION} Driver;SERVER=localhost;DATABASE=test;UID=test;PWD=test-password"
+    fi
 
+  # SQLITE SETUP
+  - |
+    if [[ $OS_ID = 0.4.40 ]]; then
+      #
+      # There is a tool called `odbcinst` which supposedly registers ODBC
+      # drivers, but it didn't work in my tests.  `myodbc-installer` did.
+      # So despite it being a MySQL tool, use it for SQLite too.
+      #
+      # Note: a "Setup" key is required for SQLite, for some reason.
+      #
+      sudo myodbc-installer -a -d -n "SQLite3 ODBC Driver" \
+          -t "DRIVER=/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so;SETUP=/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so"
+
+      # You need to run some command to get the database to be created.  This
+      # seems the best answer in terms of actually creating a non-0 size file
+      # that is most obviously "a SQLite database", while still being empty.
+      #
+      # https://stackoverflow.com/a/51455470
+      #
+      sqlite3 test.db "VACUUM;"
+
+      # Register the DSN.  There are no usernames or passwords in SQLite.
+      #
+      sudo myodbc-installer -s -a -c2 -n "rebol-sqlite" \
+          -t "DRIVER=SQLite3 ODBC Driver;DATABASE=$(pwd)/test.db"
+    fi
+
+  - |
+    if [[ $OS_ID = 0.4.40 ]]; then  # Sanity checks
       echo "ODBC Driver Configuration =>"
       myodbc-installer -d -l
 
@@ -232,13 +264,14 @@ install:
       echo "Dumping /etc/odbc.ini =>"
       cat /etc/odbc.ini
 
-      # Although we've installed `libzmq3-dev`, the xenial version of Linux
-      # gets a package with `libzmq.so.5` and not `libzmq.so.3` which our
-      # compiled Rebol currently asks for.  (Really the ZeroMQ builds should
-      # statically link ZMQ, but...not a priority.)  Doing a symbolic link
-      # seems to make the `r3` run.
-      #
-      sudo ln -s /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/libzmq.so.3
+      echo "Listing /usr/lib/x86_64/linux-gnu/odbc/"
+      ls /usr/lib/x86_64-linux-gnu/odbc/
+
+      echo "Listing /usr/lib/x86_64/linux-gnu/odbc/"
+      ls /usr/lib/x86_64-linux-gnu/odbc/
+
+      echo "Listing /usr/local/lib"
+      ls /usr/local/lib/
     fi
 
   - |
@@ -248,13 +281,27 @@ install:
     }
 
   - |
-    download "$CDN/0.13.2/last-deploy.short-hash" last-deploy.short-hash
+    download "$CDN/$OS_ID/last-deploy.short-hash" last-deploy.short-hash
     hash=`cat last-deploy.short-hash`
 
   - |
     download $CDN/$OS_ID/r3-$hash-debug-cpp r3
     chmod +x r3
     rm last-deploy.short-hash
+
+    # Although we've installed `libzmq3-dev`, we built on an earlier version
+    # of Linux than the bionic one being used in this script (for technical
+    # reasons of missing .so files needed by `myodbc-installer`).  But this
+    # bionic Linux gets `libzmq.so.5` and not `libzmq.so.3`, despite asking
+    # for `libzmq3-dev`.  The logic is presumably that it's backwards
+    # compatible, but there's no symbolic link pointing libzmq.so.3 to reach
+    # libzmq.so.5.  Doing so seems to make r3 run.
+    #
+    # !!! Really the ZeroMQ builds should statically link ZMQ, vs. dynamic.
+  - |
+    if [[ $OS_ID = 0.4.40 ]]; then
+      sudo ln -s /usr/lib/x86_64-linux-gnu/libzmq.so.5 /usr/lib/libzmq.so.3
+    fi
 
 script:
   - |
@@ -286,6 +333,10 @@ script:
   # The goal is to store Rebol values into column types that can hold them,
   # and then read the same value back out after writing it.
   #
-  - ./r3 tests/odbc-test.reb
+  # This runs against the DSNs of the MySQL and SQLite databases created by
+  # the process above.
+  #
+  - ./r3 tests/odbc-test.reb rebol-mysql
+  - ./r3 tests/odbc-test.reb rebol-sqlite
 
 # vim: set et sw=2:

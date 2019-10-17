@@ -32,6 +32,11 @@ On Mac, it seems HomeBrew will install the headers when you merely say:
 
     brew install unixodbc
 
+## Notes
+
+* ODBC Data Source Names (DSN) have a maximum length of 32 characters.  They
+  can be ASCII characters except for spaces and [ ] { } , ; ? * = ! @ \
+
 ## License
 
 The original code from which this extension is derived is Copyright (C)
