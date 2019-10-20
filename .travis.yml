@@ -80,6 +80,8 @@ matrix:
             # - mysql-server  # earlier version (5) installed by default
             - sqlite3
             - libsqliteodbc
+            - firebird3.0-server
+            - firebird-dev
 
     # [2] OSX x64, debug, clang++
     #
@@ -250,6 +252,75 @@ install:
           -t "DRIVER=SQLite3 ODBC Driver;DATABASE=$(pwd)/test.db"
     fi
 
+  # FIREBIRD SETUP (ODBC not yet working with this, however)
+  #
+  # Not the most popular database around, but Firebird is used in Synapse EHR
+  # under Rebol2.  On Linux it seems there are problems with the driver--these
+  # may be because it does not support the "W" unicode functions correctly.
+  # PyODBC seems to be able to communicate with it, however.
+  #
+  # !!! Even though it's not working yet, keeping what it takes to set it up
+  # here serves as documentation of those steps.
+  #
+  - |
+    if [[ $OS_ID = 0.4.40 ]]; then  # Firebird setup
+      #
+      # This is required to *build* the Firebird ODBC driver (the autodetect
+      # looks for the shared library with no numeric extension).  It may not
+      # be important beyond that, but do it anyway.
+      #
+      sudo ln -s /usr/lib/x86_64-linux-gnu/firebird/3.0/lib/libfbclient.so.2 /usr/lib/libfbclient.so
+
+      # Need sudo privileges to run the Firebird SQL without a password (we
+      # don't know the admin password as it was randomly generated).
+      #
+      echo "CREATE DATABASE \"test.fdb\";" | sudo isql-fb
+      sudo chmod 777 test.fdb
+
+      echo "CREATE USER test PASSWORD 'test-password';" | sudo isql-fb test.fdb
+
+      # TBD: Find a way to get a copy of the Firebird ODBC driver libOdbcFb.so
+      # Currently it's distributed via SourceForge (which sucks and has no
+      # direct download links).  Also, if you go through their terrible JS
+      # tricks to get a copy after waiting for a timer and looking at blinking
+      # ads, you get an archive that has a "bad block" error when tar
+      # unarchiving.  And it segfaults if you use it.  Building the driver
+      # oneself is possible and it seems to run...so we could host it
+      # somewhere, but this shows it's an uphill battle to support this.
+
+      #wget http://example.com/wherever/libOdbcFb-some-version.so
+      #sudo mv libOdbcFb-some-version.so /usr/lib/libOdbcFb.so
+      echo "Temp Fake Odbc Driver File" > /usr/lib/libOdbcFb.so
+
+      # IIRC this was needed to at some point because the ODBC client was not
+      # finding the firebird client under its name, but called it "libgds.so"
+      #
+      sudo ln -s /usr/lib/x86_64-linux-gnu/libfbclient.so.3.0.2 /usr/lib/libgds.so
+
+      # Register the ODBC Driver (edits %/etc/odbcinst.ini)
+      #
+      sudo myodbc-installer -a -d -n "Firebird" \
+          -t "DRIVER=/usr/lib/libOdbcFb.so;SETUP=/usr/lib/libOdbcFb.so;Threading=1;FileUsage=1;CPTimeout=;CPReuse="
+
+      # Register the DSN (edits %/etc/odbc.ini)
+      #
+      sudo myodbc-installer -s -a -c2 -n "rebol-sqlite" \
+          -t "DRIVER=Firebird;DBNAME=$(pwd)/test.fdb;USER=test;PASSWORD=test-password;ROLE=;CHARACTERSET=;READONLY=No;NOWAIT=No"
+
+      # We must access via `test` user without root rights.
+      # There is a need to be able to create lockfiles in the tmp directory.
+      # !!! Is there a better way to do this?
+      #
+      chmod 777 /tmp/firebird
+      chmod 777 /tmp/firebird/fb_init
+
+      # Try a CREATE TABLE statement without root privileges
+      #
+      echo "CREATE TABLE simple (id int not null primary key);" \
+        | isql-fb -user test -password test-password test.fdb
+    fi
+
+  # SANITY CHECKS
   - |
     if [[ $OS_ID = 0.4.40 ]]; then  # Sanity checks
       echo "ODBC Driver Configuration =>"
@@ -336,7 +407,7 @@ script:
   # This runs against the DSNs of the MySQL and SQLite databases created by
   # the process above.
   #
-  - ./r3 tests/odbc-test.reb rebol-mysql
-  - ./r3 tests/odbc-test.reb rebol-sqlite
+  - ./r3 tests/odbc-test.reb rebol-mysql --mysql
+  - ./r3 tests/odbc-test.reb rebol-sqlite --sqlite
 
 # vim: set et sw=2:
