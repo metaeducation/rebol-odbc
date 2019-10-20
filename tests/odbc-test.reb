@@ -79,6 +79,10 @@ trap [
     connection: open join odbc:// dsn
     statement: first connection
 
+    sql-execute: specialize 'odbc-execute [  ; https://forum.rebol.info/t/1234
+        statement: statement
+    ]
+
     ; Despite the database being specified in the odbc.ini, it appears that
     ; MySQL requires you to name it again...either with a USE statement or
     ; by specifying test.<table-name> instead of just saying <table-name> on
@@ -90,17 +94,17 @@ trap [
     ; https://stackoverflow.com/q/5634501/
     ;
     if is-mysql [
-        insert statement {USE test}
+        sql-execute {USE test}
     ]
 
-    for-each [name sqltype content] tables [
         ;
         ; Drop table if it exists
         ;
+    for-each [label sqltype content] tables [
+        let table-name: unspaced [{test_} label]
+
         trap [
-            insert statement unspaced [
-                {DROP TABLE `test_} name {`}
-            ]
+            sql-execute [{DROP TABLE} table-name]
         ]
 
         ; Create table, each one of which has a single field `value` as the
@@ -110,10 +114,10 @@ trap [
         ; if you say you want to increment it.
         ;
         let auto-increment: if is-sqlite [_] else ["AUTO_INCREMENT"]
-        insert statement unspaced [
-            {CREATE TABLE `test_} name {`} space {(}
-                {id INTEGER PRIMARY KEY NOT NULL} space auto-increment {, }
-                {`value`} space sqltype space {NOT NULL} space
+        sql-execute [
+            {CREATE TABLE} table-name {(}
+                {id} {INTEGER} {PRIMARY KEY} {NOT NULL} auto-increment {,}
+                {val} sqltype {NOT NULL}
             {)}
         ]
 
@@ -124,16 +128,15 @@ trap [
         ; parameter code for each type.
         ;
         for-each value content [
-            insert statement reduce [
-                unspaced [{INSERT INTO `test_} name {` (`value`) VALUES ( ? )}]
-                value
+            sql-execute [
+                {INSERT INTO} table-name {(val)} {VALUES} {(} @value {)}
             ]
         ]
 
         ; Query the rows and make sure the values that come back are the same
         ;
-        insert statement unspaced [
-            {SELECT value FROM `test_} name {`}
+        sql-execute [
+            {SELECT val FROM} table-name
         ]
 
         rows: copy statement
