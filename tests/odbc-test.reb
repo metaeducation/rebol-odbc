@@ -93,6 +93,9 @@ tables: compose [
 
     char "CHAR(3)" ["abc" "def" "ghi"]
     varchar "VARCHAR(10)" ["" "abc" "defgh" "jklmnopqrs"]
+    ((if not is-mysql '[
+        longvarchar "LONGVARCHAR(255)" ["" "abc" "defgh" "jklmnopqrs"]
+    ]))
 
     ; Firebird lacked NCHAR types and expects you to use the syntax of
     ; CHAR(x) CHARACTER SET UNICODE_FSS.  This was before 3.0 and so go ahead
@@ -114,6 +117,8 @@ tables: compose [
 ]
 
 trap [
+    odbc-set-char-encoding 'ucs-2
+
     print ["Opening DSN:" dsn]
 
     connection: open join odbc:// dsn
@@ -164,6 +169,13 @@ trap [
                 {id} {INTEGER} {PRIMARY KEY} {NOT NULL} auto-increment {,}
                 {val} sqltype {NOT NULL}
             {)}
+        ]
+
+        ; If you wanted to see the table list you could dump it here.
+        ;
+        comment [
+            insert statement ['tables]
+            probe copy statement
         ]
 
         === INSERT VALUES SPECIFIED IN TEST ===
