@@ -304,7 +304,7 @@ install:
 
       # Register the DSN (edits %/etc/odbc.ini)
       #
-      sudo myodbc-installer -s -a -c2 -n "rebol-sqlite" \
+      sudo myodbc-installer -s -a -c2 -n "rebol-firebird" \
           -t "DRIVER=Firebird;DBNAME=$(pwd)/test.fdb;USER=test;PASSWORD=test-password;ROLE=;CHARACTERSET=;READONLY=No;NOWAIT=No"
 
       # We must access via `test` user without root rights.
