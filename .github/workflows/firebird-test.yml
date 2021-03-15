@@ -1,0 +1,147 @@
+#
+# %firebird-test.yml
+#
+#====# NOT WORKING #==========================================================#
+#
+# Firebird is not exactly the most popular database around, but it is used in
+# Synapse EHR under Rebol2.  On Linux it seems there are problems with the
+# driver--these may be because it does not support the "W" unicode functions
+# correctly.  PyODBC seems to be able to communicate with it, however.
+#
+# Even though it's not working yet, this file is being kept for documentation
+# of what was learned about setting it up while trying to get it to work.
+#
+
+name: Test Firebird ODBC
+
+
+on:
+  # Currently never run unless manually requested, given that it doesn't work!
+  #
+  #push:
+  #  branches: [
+  #    master
+  #  ]
+  #pull_request:
+  #  branches: [
+  #    master
+  #  ]
+  workflow_dispatch:  # Allows running this workflow manually from Actions tab
+
+
+jobs:
+  test-firebird-odbc:
+
+    runs-on: ubuntu-latest
+
+
+    steps:
+
+  #====# CHECKOUT STEPS #=====================================================#
+
+    # https://github.com/actions/checkout
+    #
+    # See README: Checkout Action
+    #
+    - uses: actions/checkout@v2  # See README: Trusted Actions
+
+
+  #====# FIREBIRD INSTALLATION #==============================================#
+
+
+    - name: Install Firebird
+      run: |
+        sudo apt install firebird3.0-server
+        sudo apt install firebird-dev
+
+
+  #====# SQLITE-ODBC INSTALLATION #===========================================#
+
+
+    - name: Install ODBC And myodbc-installer Tool
+      run: |
+        bash -e tools/install-odbc-tools.sh
+
+
+    - name: Install Firebird ODBC
+      run: |
+        # This is required to *build* the Firebird ODBC driver (the autodetect
+        # looks for the shared library with no numeric extension).  It may not
+        # be important beyond that, but do it anyway.
+        #
+        sudo ln -s /usr/lib/x86_64-linux-gnu/firebird/3.0/lib/libfbclient.so.2 /usr/lib/libfbclient.so
+
+        # Need sudo privileges to run the Firebird SQL without a password (we
+        # don't know the admin password as it was randomly generated).
+        #
+        echo "CREATE DATABASE \"test.fdb\";" | sudo isql-fb
+        sudo chmod 777 test.fdb
+
+        echo "CREATE USER test PASSWORD 'test-password';" | sudo isql-fb test.fdb
+
+        # TBD: Find a way to get a copy of the Firebird ODBC driver libOdbcFb.so
+        # Currently it's distributed via SourceForge (which sucks and has no
+        # direct download links).  Also, if you go through their terrible JS
+        # tricks to get a copy after waiting for a timer and looking at blinking
+        # ads, you get an archive that has a "bad block" error when tar
+        # unarchiving.  And it segfaults if you use it.  Building the driver
+        # oneself is possible and it seems to run...so we could host it
+        # somewhere, but this shows it's an uphill battle to support this.
+
+        #wget http://example.com/wherever/libOdbcFb-some-version.so
+        #sudo mv libOdbcFb-some-version.so /usr/lib/libOdbcFb.so
+        echo "Temp Fake Odbc Driver File" > /usr/lib/libOdbcFb.so
+
+        # IIRC this was needed to at some point because the ODBC client was not
+        # finding the firebird client under its name, but called it "libgds.so"
+        #
+        sudo ln -s /usr/lib/x86_64-linux-gnu/libfbclient.so.3.0.2 /usr/lib/libgds.so
+
+        # Register the ODBC Driver (edits %/etc/odbcinst.ini)
+        #
+        sudo myodbc-installer -a -d -n "Firebird" \
+            -t "DRIVER=/usr/lib/libOdbcFb.so;SETUP=/usr/lib/libOdbcFb.so;Threading=1;FileUsage=1;CPTimeout=;CPReuse="
+
+        # Register the DSN (edits %/etc/odbc.ini)
+        #
+        sudo myodbc-installer -s -a -c2 -n "rebol-firebird" \
+            -t "DRIVER=Firebird;DBNAME=$(pwd)/test.fdb;USER=test;PASSWORD=test-password;ROLE=;CHARACTERSET=;READONLY=No;NOWAIT=No"
+
+        # We must access via `test` user without root rights.
+        # There is a need to be able to create lockfiles in the tmp directory.
+        # !!! Is there a better way to do this?
+        #
+        chmod 777 /tmp/firebird
+        chmod 777 /tmp/firebird/fb_init
+
+        # Try a CREATE TABLE statement without root privileges
+        #
+        echo "CREATE TABLE simple (id int not null primary key);" \
+          | isql-fb -user test -password test-password test.fdb
+
+
+  #====# SANITY CHECK ODBC #=================================================#
+
+
+    - name: Sanity Check ODBC
+      run: |
+        bash -e tools/sanity-check-odbc.sh
+
+
+  #====# INSTALL R3 INTERPRETER #=============================================#
+
+
+    - name: Download and Cache the Interpreter
+      uses: metaeducation/ren-c-action@release
+      with:
+        checked: true
+
+
+  #====# TEST STEPS #==========================================================#
+
+    # The tests are designed to call QUIT and return 1 status on failure, with
+    # 0 returned on success.
+
+    - name: ODBC Firebird Insert And Retrieve Test
+      run: |
+        r3 tests/odbc-test.reb rebol-firebird --firebird

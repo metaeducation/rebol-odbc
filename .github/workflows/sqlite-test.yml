@@ -1,0 +1,112 @@
+
+name: Test Sqlite ODBC
+
+
+on:
+  push:
+    branches: [
+      master
+    ]
+  pull_request:
+    branches: [
+      master
+    ]
+  workflow_dispatch:  # Allows running this workflow manually from Actions tab
+
+
+jobs:
+  test-sqlite-odbc:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+  #====# CHECKOUT STEPS #=====================================================#
+
+    # https://github.com/actions/checkout
+    #
+    # See README: Checkout Action
+    #
+    - uses: actions/checkout@v2  # See README: Trusted Actions
+
+
+  #====# SQLITE INSTALLATION #================================================#
+
+
+    - name: Install Sqlite
+      run: |
+        sudo apt install sqlite3
+        sudo apt install libsqliteodbc
+
+
+  #====# SQLITE-ODBC INSTALLATION #===========================================#
+
+
+    - name: Install ODBC And myodbc-installer Tool
+      run: |
+        bash -e tools/install-odbc-tools.sh
+
+
+      # There is a tool called `odbcinst` which supposedly registers ODBC
+      # drivers, but it didn't work in my tests.  `myodbc-installer` did.
+      # So despite it being a MySQL tool, use it for SQLite too.
+      #
+      # Note: a "Setup" key is required for SQLite, for some reason.
+      #
+    - name: Install Sqlite ODBC Driver
+      run: |
+        sudo myodbc-installer -a -d -n "SQLite3 ODBC Driver" \
+          -t "DRIVER=/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so;SETUP=/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so"
+
+
+      # You need to run some command to get the database to be created.  This
+      # seems the best answer in terms of actually creating a non-0 size file
+      # that is most obviously "a SQLite database", while still being empty.
+      #
+      # https://stackoverflow.com/a/51455470
+      #
+    - name: Create Sqlite Database File test.db
+      run: |
+        sqlite3 test.db "VACUUM;"
+
+
+      # Register the DSN.  There are no usernames or passwords in SQLite.
+      #
+    - name: Register DSN
+      run: |
+        sudo myodbc-installer -s -a -c2 -n "rebol-sqlite" \
+          -t "DRIVER=SQLite3 ODBC Driver;DATABASE=$(pwd)/test.db"
+
+
+  #====# SANITY CHECK ODBC #=================================================#
+
+
+    - name: Sanity Check ODBC
+      run: |
+        bash -e tools/sanity-check-odbc.sh
+
+
+  #====# INSTALL R3 INTERPRETER #=============================================#
+
+
+    - name: Download and Cache the Interpreter
+      uses: metaeducation/ren-c-action@release
+      with:
+        checked: true
+
+
+  #====# TEST STEPS #==========================================================#
+
+    # The tests are designed to call QUIT and return 1 status on failure, with
+    # 0 returned on success.
+
+    # For starters, this is a basic insert and retrieve test of Rebol values.
+    # The goal is to store Rebol values into column types that can hold them,
+    # and then read the same value back out after writing it.
+    #
+    # This runs against the DSNs of the MySQL database created above.
+    # the process above.
+    #
+    - name: ODBC Sqlite Insert And Retrieve Test
+      run: |
+        r3 tests/odbc-test.reb rebol-sqlite --sqlite

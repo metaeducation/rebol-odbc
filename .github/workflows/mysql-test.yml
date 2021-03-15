@@ -1,0 +1,162 @@
+
+name: Test MySQL ODBC
+
+
+on:
+  push:
+    branches: [
+      master
+    ]
+  pull_request:
+    branches: [
+      master
+    ]
+  workflow_dispatch:  # Allows running this workflow manually from Actions tab
+
+
+jobs:
+  test-mysql-odbc:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+  #====# CHECKOUT STEPS #=====================================================#
+
+    # https://github.com/actions/checkout
+    #
+    # See README: Checkout Action
+    #
+    - uses: actions/checkout@v2  # See README: Trusted Actions
+
+
+  #====# MYSQL INSTALLATION #=================================================#
+
+    # GitHub Actions has a "Services" Method for Configuring mysql, e.g.
+    #
+    #     mysql:
+    #       image: mysql:8.0
+    #       env:
+    #         MYSQL_ROOT_PASSWORD: password
+    #         MYSQL_DATABASE: test
+    #
+    # ...etc.  We don't use this method of configuring MySQL and making tables
+    # as that is harder to copy/paste as equivalent in a local console.
+
+    - name: Install MySQL
+      run: |
+        mysql -V
+        sudo service mysql start
+
+
+    - name: Start MySQL Server Daemon
+      run: |
+        sudo service mysql start
+        while !(sudo mysqladmin --password=root ping)
+        do
+          sleep 3
+          echo "waiting for mysql ..."
+        done
+
+
+  #====# MYSQL-ODBC INSTALLATION #============================================#
+
+
+    - name: Install ODBC And myodbc-installer Tool
+      run: |
+        source tools/install-odbc-tools.sh
+
+        # The myodbc-installer also includes the MySQL ODBC Driver.
+        # Location set by install-odbc-tools.sh, make known to later steps.
+        #
+        echo "MYODBC_VERSION=$MYODBC_VERSION" >> $GITHUB_ENV
+        echo "MYODBC_FILE=$MYODBC_FILE" >> $GITHUB_ENV
+
+
+    - name: Install MySQL ODBC Driver
+      run: |
+        # Use the Unicode version, not ANSI.  Note that unixodbc's concept of
+        # "unicode" is not UTF-8, but rather 16-bit WCHAR-based (matching
+        # Windows).
+        #
+        sudo myodbc-installer -a -d -n "MySQL ODBC ${MYODBC_VERSION} Driver" \
+            -t "Driver=/usr/local/lib/${MYODBC_FILE}"
+
+
+    # ODBC does not like letting you use the root account w/no password as
+    # a data source.  Make account `test` with password `test-password` and
+    # give it access to the database.
+    #
+    # Note: GitHub CI sets the MySQL root account up with a password, but this
+    # wasn't true on Travis...and might not be true on all systems.  Keep the
+    # test account creation in case some cases need it.
+    #
+    - name: Grant Privileges To Test Account
+      run: |
+        # MySQL 8.0 Requires CREATE USER and GRANT PRIVILEGES as separate steps
+        #
+        echo "CREATE USER 'test'@'localhost' IDENTIFIED BY 'test-password';" | sudo mysql --password=root --host=127.0.0.1
+        echo "GRANT ALL PRIVILEGES ON *.* TO 'test'@'localhost';" | sudo mysql --password=root --host=127.0.0.1
+
+
+    # The "DSN" identifying the database is "Rebol", a label stored in the
+    # unixodbc %/usr/local/etc/odbc.ini (or similar).  But the actual name
+    # of the MySQL database mapped to there is `test`.
+    #
+    # Use the test account with the test password to do this as a sanity
+    # check that the privileges are granted.
+    #
+    - name: Create Test Database
+      run: |
+        echo "CREATE DATABASE test" | mysql --host=127.0.0.1 --user=test --password=test-password
+
+
+    # Register that DSN.  The `odbc://rebol-mysql` syntax for naming a DSN
+    # is Rebol-specific, typically it would just be `Rebol` in a context
+    # that knows a DSN is supposed to be in that position.
+    #
+    # NOTE: if you have problems with `localhost` saying can't connect with
+    # socket /tmp/mysql.sock, and you are sure the mysql daemon is running,
+    # then on some Linux installations using `127.0.0.1` instead can help
+    # force not to go through a socket.  That doesn't solve the problem if
+    # you actually want to talk to a database over a network, but is good
+    # enough for this test (and other purposes).
+    #
+    - name: Register DSN
+      run: |
+        sudo myodbc-installer -s -a -c2 -n "rebol-mysql" \
+            -t "DRIVER=MySQL ODBC ${MYODBC_VERSION} Driver;SERVER=localhost;DATABASE=test;UID=test;PWD=test-password"
+
+
+  #====# SANITY CHECK ODBC #=================================================#
+
+
+    - name: Sanity Check ODBC
+      run: |
+        bash -e tools/sanity-check-odbc.sh
+
+
+  #====# INSTALL R3 INTERPRETER #=============================================#
+
+
+    - name: Download and Cache the Interpreter
+      uses: metaeducation/ren-c-action@release
+      with:
+        checked: true
+
+
+  #====# TEST STEPS #==========================================================#
+
+    # The tests are designed to call QUIT and return 1 status on failure, with
+    # 0 returned on success.
+
+    # For starters, this is a basic insert and retrieve test of Rebol values.
+    # The goal is to store Rebol values into column types that can hold them,
+    # and then read the same value back out after writing it.
+    #
+    # This runs against the DSNs of the MySQL database created above.
+    # the process above.
+    #
+    - name: ODBC MySQL Insert And Retrieve Test
+      run: |
+        r3 tests/odbc-test.reb rebol-mysql --mysql
