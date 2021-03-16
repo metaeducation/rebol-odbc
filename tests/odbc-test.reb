@@ -124,7 +124,7 @@ trap [
     connection: open join odbc:// dsn
     statement: first connection
 
-    sql-execute: specialize 'odbc-execute [  ; https://forum.rebol.info/t/1234
+    sql-execute: specialize :odbc-execute [  ; https://forum.rebol.info/t/1234
         statement: statement
         verbose: show-sql?
     ]
