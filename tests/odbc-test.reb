@@ -126,7 +126,7 @@ trap [
 
     sql-execute: specialize :odbc-execute [  ; https://forum.rebol.info/t/1234
         statement: statement
-        verbose: show-sql?
+        verbose: if show-sql? [#]
     ]
 
     ; Despite the database being specified in the odbc.ini, it appears that
