@@ -32,15 +32,15 @@ Rebol [
     }
 ]
 
-(dsn: match text! first system/script/args) else [
+(dsn: match text! first system.script.args) else [
     fail "Data Source Name (DSN) must be text string on command line"
 ]
 
-show-sql?: did find system/script/args "--show-sql"
+show-sql?: did find system.script.args "--show-sql"
 
-is-sqlite: did find system/script/args "--sqlite"
-is-mysql: did find system/script/args "--mysql"
-is-firebird: did find system/script/args "--firebird"
+is-sqlite: did find system.script.args "--sqlite"
+is-mysql: did find system.script.args "--mysql"
+is-firebird: did find system.script.args "--firebird"
 
 tables: compose [
     ;
