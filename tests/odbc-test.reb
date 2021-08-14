@@ -75,7 +75,7 @@ tables: compose [
     numeric "NUMERIC(20,2)" [-3.4 -1.2 0.0 5.6 7.8]
     decimal "DECIMAL(3,2)" [-3.4 -1.2 0.0 5.6 7.8]
 
-    date "DATE" [12-Dec-2012 21-Apr-1975]
+    date "DATE" [12-Dec-2012/0:00+0:00 21-Apr-1975/0:00+0:00]
 
     ; Fractional time is lost:
     ; https://github.com/metaeducation/rebol-odbc/issues/1
