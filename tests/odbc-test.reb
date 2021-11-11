@@ -122,7 +122,7 @@ trap [
     print ["Opening DSN:" dsn]
 
     connection: open join odbc:// dsn
-    statement: first connection
+    statement: odbc-statement-of connection
 
     sql-execute: specialize :odbc-execute [  ; https://forum.rebol.info/t/1234
         statement: statement
