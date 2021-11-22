@@ -15,29 +15,29 @@ Rebol [
         Use: r3 test-odbc.reb dsn --firebird --show-sql
     }
     Notes: {
-        * This test supports Firebird even though it is non-standard, because
-          prominent user @gchiu has used it for decades, including in the
-          Synapse EHR product.  Here is a summary of its quirky mappings; we
-          assume support for versions >= 3.0 only:
+      * This test supports Firebird even though it is non-standard, because
+        prominent user @gchiu has used it for decades, including in the
+        Synapse EHR product.  Here is a summary of its quirky mappings; we
+        assume support for versions >= 3.0 only:
 
-          https://firebirdsql.org/manual/migration-mssql-data-types.html
+        https://firebirdsql.org/manual/migration-mssql-data-types.html
 
-        * Some databases (notably MySQL and SQLite) allow backticks when
-          naming tables or columns, and use double-quotes to annotate string
-          values.  This is not standard SQL, which conflates double quotes for
-          string literals as the means for avoiding conflicts with reserved
-          column names:
+      * Some databases (notably MySQL and SQLite) allow backticks when
+        naming tables or columns, and use double-quotes to annotate string
+        values.  This is not standard SQL, which conflates double quotes for
+        string literals as the means for avoiding conflicts with reserved
+        column names:
 
-          https://stackoverflow.com/q/5952677
+        https://stackoverflow.com/q/5952677
 
-          But because MySQL will error if you put column or table names in
-          double quotes--and databases like Firebird will error if you use
-          backticks--there's no common way to use a reserved word as a column
-          name.  That means not just columns with names like `INT`, but even
-          useful-sounding names like `VALUE`.
+        But because MySQL will error if you put column or table names in
+        double quotes--and databases like Firebird will error if you use
+        backticks--there's no common way to use a reserved word as a column
+        name.  That means not just columns with names like `INT`, but even
+        useful-sounding names like `VALUE`.
 
-          This file sticks to a lowest-common denominator of naming without
-          quotes, rather than do conditional delimiting based on ODBC source.
+        This file sticks to a lowest-common denominator of naming without
+        quotes, rather than do conditional delimiting based on ODBC source.
     }
 ]
 
@@ -181,6 +181,9 @@ tables: compose [
     ]))
 ]
 
+mismatches: 0
+total: 0
+
 trap [
     odbc-set-char-encoding 'ucs-2
 
@@ -284,8 +287,11 @@ trap [
         either (sort copy actual) = (sort copy content) [
             print "QUERY MATCHED ORIGINAL DATA"
         ][
+            mismatches: me + 1
             print "QUERY DID NOT MATCH ORIGINAL DATA"
         ]
+
+        total: total + 1
 
         print newline
     ]
@@ -297,5 +303,9 @@ then (func [e] [
     print ["Test had an error:" mold e]
     quit 1
 ])
+
+if mismatches <> 0 [
+    fail [mismatches "out of" total "tests did not match original data"]
+]
 
 quit 0  ; return code is heeded by test caller
