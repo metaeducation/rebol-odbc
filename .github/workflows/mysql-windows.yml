@@ -1,0 +1,178 @@
+#
+# %mysql-windows.yml
+#
+
+name: MySQL Windows ODBC
+
+
+on:
+  push:
+    branches: [
+      master
+    ]
+  pull_request:
+    branches: [
+      master
+    ]
+  workflow_dispatch:  # Allows running this workflow manually from Actions tab
+
+
+# We use bash by default in Ren-C workflows, even on Windows
+#
+defaults:
+  run:
+    shell: bash
+
+
+jobs:
+  mysql-windows-odbc:
+
+    runs-on: windows-latest
+
+    steps:
+
+  #====# CHECKOUT STEPS #=====================================================#
+
+    # GitHub CI checkout on Windows auto translates LF to CR/LF in files:
+    #
+    # https://github.com/actions/checkout/issues/135
+    #
+    # However, Ren-C is taking the long view on this and prohibiting CR/LF in
+    # source by default.
+    #
+    # https://forum.rebol.info/t/newlina-non-grata/1207
+    # https://forum.rebol.info/t/1264
+    #
+    - name: Disable LF to CRLF Auto Translation In Git
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+
+
+    # https://github.com/actions/checkout
+    #
+    # See README: Checkout Action
+    #
+    - uses: actions/checkout@v2  # See README: Trusted Actions
+
+
+  #====# MYSQL INSTALLATION #=================================================#
+
+    # Windows Runners on GitHub Actions have MySQL 8 already installed.  If
+    # you want other versions or want support on Mac, Windows, and Linux this
+    # GitHub Action will do the installation:
+    #
+    # https://github.com/ankane/setup-mysql
+    #
+    # A bigger test matrix sounds nice, but there's not much reason to do that
+    # if there are no clients.  This is faster than going through an install.
+    #
+    - name: Use Preinstalled MySQL 8
+      run: |
+        mysqld --initialize-insecure  # without the insecure switch this fails
+        mysqld --install
+        net start MySQL
+
+
+  #====# DATABASE SETUP #=====================================================#
+
+    # ODBC does not like letting you use the root account w/no password as
+    # a data source.  Make account `test` with password `test-password` and
+    # give it access to the database.
+    #
+    # Note: GitHub CI has no root password on Windows (e.g. -proot will fail)
+    #
+    - name: Grant Privileges To Test Account
+      run: |
+        # MySQL 8.0 Requires CREATE USER and GRANT PRIVILEGES as separate steps
+        #
+        echo "CREATE USER 'test'@'localhost' IDENTIFIED BY 'test-password';" | mysql -uroot -h127.0.0.1
+        echo "GRANT ALL PRIVILEGES ON *.* TO 'test'@'localhost';" | mysql -uroot -h127.0.0.1
+
+
+    # Use the test account with the test password to do this as a sanity
+    # check that the privileges are granted.
+    #
+    - name: Create Test Database
+      run: |
+        echo "CREATE DATABASE test" | mysql --host=127.0.0.1 --user=test --password=test-password
+
+
+  #====# MYSQL ODBC CONNECTOR INSTALLATION #==================================#
+
+    # This installation process is a very abridged version of commands found
+    # in the PyODBC GitHub for installing and caching drivers on AppVeyor:
+    #
+    # https://github.com/mkleehammer/pyodbc/blob/master/appveyor/install.ps1
+
+    - name: Output Already Avaliable ODBC Drivers Before Installation
+      if: false  # This is slow, debug only
+      shell: pwsh  # It's a powershell command
+      run: |
+        Write-Output ""
+        Write-Output "*** Installed ODBC drivers:"
+        Get-OdbcDriver
+
+
+    - name: Install MySQL ODBC Driver
+      shell: cmd
+      run: |
+        rem -L follows redirects
+        curl -o connector.msi -L https://dev.mysql.com/get/Downloads/Connector-ODBC/8.0/mysql-connector-odbc-8.0.19-winx64.msi
+        start /wait msiexec.exe /i connector.msi /quiet /qn /norestart
+
+
+    - name: Output ODBC Drivers After Installation
+      if: false  # This is slow, debug only
+      shell: pwsh  # It's a powershell command
+      run: |
+        Write-Output ""
+        Write-Output "*** Installed ODBC drivers:"
+        Get-OdbcDriver
+
+
+    # ODBC DSN adding is done in PowerShell...an older tool called ODBCCONF.exe
+    # is deprecated:
+    #
+    # https://docs.microsoft.com/en-us/sql/odbc/odbcconf-exe
+    #
+    # Windows does not permit storing the UID or PWD in the DSN entry itself,
+    # so it must be provided by the connection.
+    #
+    - name: Register DSN Using PowerShell
+      shell: pwsh
+      run: |
+        Add-OdbcDsn `
+          -Name "rebol-mysql" `
+          -DriverName "MySQL ODBC 8.0 Unicode Driver" `
+          -Platform "64-bit" `
+          -DsnType "System" `
+          -SetPropertyValue @( `
+            "SERVER=127.0.0.1", `
+            "PORT=3306", `
+            "DATABASE=test"
+          )
+
+
+  #====# INSTALL R3 INTERPRETER #=============================================#
+
+    - name: Download and Cache the Interpreter
+      uses: metaeducation/ren-c-action@release
+      with:
+        checked: true
+
+
+  #====# TEST STEPS #==========================================================#
+
+    # The tests are designed to call QUIT and return 1 status on failure, with
+    # 0 returned on success.
+
+    # For starters, this is a basic insert and retrieve test of Rebol values.
+    # The goal is to store Rebol values into column types that can hold them,
+    # and then read the same value back out after writing it.
+    #
+    # This runs against the DSNs of the MySQL database created above.
+    #
+    - name: ODBC MySQL Insert And Retrieve Test
+      run: |
+        r3 tests/odbc-test.reb rebol-mysql --mysql

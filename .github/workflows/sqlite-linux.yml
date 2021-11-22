@@ -1,5 +1,8 @@
+#
+# %sqlite-linux.yml
+#
 
-name: Test Sqlite ODBC
+name: Sqlite Linux ODBC
 
 
 on:
@@ -15,7 +18,7 @@ on:
 
 
 jobs:
-  test-sqlite-odbc:
+  sqlite-linux-odbc:
 
     runs-on: ubuntu-latest
 
@@ -32,7 +35,6 @@ jobs:
 
   #====# SQLITE INSTALLATION #================================================#
 
-
     - name: Install Sqlite
       run: |
         sudo apt install sqlite3
@@ -40,7 +42,6 @@ jobs:
 
 
   #====# SQLITE-ODBC INSTALLATION #===========================================#
-
 
     - name: Install ODBC And myodbc-installer Tool
       run: |
@@ -80,14 +81,12 @@ jobs:
 
   #====# SANITY CHECK ODBC #=================================================#
 
-
     - name: Sanity Check ODBC
       run: |
         bash -e tools/sanity-check-odbc.sh
 
 
   #====# INSTALL R3 INTERPRETER #=============================================#
-
 
     - name: Download and Cache the Interpreter
       uses: metaeducation/ren-c-action@release

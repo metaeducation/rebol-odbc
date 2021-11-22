@@ -1,5 +1,8 @@
+#
+# %mysql-linux.yml
+#
 
-name: Test MySQL ODBC
+name: MySQL Linux ODBC
 
 
 on:
@@ -15,7 +18,7 @@ on:
 
 
 jobs:
-  test-mysql-odbc:
+  mysql-linux-odbc:
 
     runs-on: ubuntu-latest
 
@@ -60,7 +63,6 @@ jobs:
 
 
   #====# MYSQL-ODBC INSTALLATION #============================================#
-
 
     - name: Install ODBC And myodbc-installer Tool
       run: |
@@ -115,6 +117,9 @@ jobs:
     # is Rebol-specific, typically it would just be `Rebol` in a context
     # that knows a DSN is supposed to be in that position.
     #
+    # We don't set the UID or PWD here on Linux even though it is allowed,
+    # because Windows does not allow it.  It must be in the connection string.
+    #
     # NOTE: if you have problems with `localhost` saying can't connect with
     # socket /tmp/mysql.sock, and you are sure the mysql daemon is running,
     # then on some Linux installations using `127.0.0.1` instead can help
@@ -125,7 +130,7 @@ jobs:
     - name: Register DSN
       run: |
         sudo myodbc-installer -s -a -c2 -n "rebol-mysql" \
-            -t "DRIVER=MySQL ODBC ${MYODBC_VERSION} Driver;SERVER=localhost;DATABASE=test;UID=test;PWD=test-password"
+            -t "DRIVER=MySQL ODBC ${MYODBC_VERSION} Driver;SERVER=localhost;DATABASE=test"
 
 
   #====# SANITY CHECK ODBC #=================================================#

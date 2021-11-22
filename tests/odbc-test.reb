@@ -121,7 +121,12 @@ trap [
 
     print ["Opening DSN:" dsn]
 
-    connection: open join odbc:// dsn
+    connection: open (if is-sqlite [
+        join odbc:// dsn  ; no user or password for sqlite
+    ] else [
+        join odbc:// reduce [dsn ";UID=test;PWD=test-password"]
+    ])
+
     statement: odbc-statement-of connection
 
     sql-execute: specialize :odbc-execute [  ; https://forum.rebol.info/t/1234
@@ -227,4 +232,4 @@ then (func [e] [
     quit 1
 ])
 
-quit 0  ; return code is heeded by test caller 
+quit 0  ; return code is heeded by test caller

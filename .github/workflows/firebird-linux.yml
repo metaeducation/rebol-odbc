@@ -1,5 +1,5 @@
 #
-# %firebird-test.yml
+# %firebird-linux.yml
 #
 #====# NOT WORKING #==========================================================#
 #
@@ -12,7 +12,7 @@
 # of what was learned about setting it up while trying to get it to work.
 #
 
-name: Test Firebird ODBC
+name: Firebird Linux ODBC
 
 
 on:
@@ -30,10 +30,9 @@ on:
 
 
 jobs:
-  test-firebird-odbc:
+  firebird-linux-odbc:
 
     runs-on: ubuntu-latest
-
 
     steps:
 
@@ -48,7 +47,6 @@ jobs:
 
   #====# FIREBIRD INSTALLATION #==============================================#
 
-
     - name: Install Firebird
       run: |
         sudo apt install firebird3.0-server
@@ -56,7 +54,6 @@ jobs:
 
 
   #====# SQLITE-ODBC INSTALLATION #===========================================#
-
 
     - name: Install ODBC And myodbc-installer Tool
       run: |
@@ -104,8 +101,11 @@ jobs:
 
         # Register the DSN (edits %/etc/odbc.ini)
         #
+        # We don't set the UID or PWD here on Linux even though it is allowed,
+        # as Windows does not allow it.  It must be in the connection string.
+        #
         sudo myodbc-installer -s -a -c2 -n "rebol-firebird" \
-            -t "DRIVER=Firebird;DBNAME=$(pwd)/test.fdb;USER=test;PASSWORD=test-password;ROLE=;CHARACTERSET=;READONLY=No;NOWAIT=No"
+            -t "DRIVER=Firebird;DBNAME=$(pwd)/test.fdb;ROLE=;CHARACTERSET=;READONLY=No;NOWAIT=No"
 
         # We must access via `test` user without root rights.
         # There is a need to be able to create lockfiles in the tmp directory.
