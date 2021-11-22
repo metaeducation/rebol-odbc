@@ -86,8 +86,30 @@ tables: compose [
         bigint_u "BIGINT UNSIGNED" [0 10 20 30 9223372036854775807]
     ]))
 
-    real "REAL" [-3.4 -1.2 0.0 5.6 7.8]
-    float "FLOAT(20)" [-3.4 -1.2 0.0 5.6 7.8]
+    ((if is-firebird '[
+        ;
+        ; REAL and FLOAT(20) get these answers in Firebird back if you were
+        ; to put in the rounded values.  It's not that interesting as to why at
+        ; this particular time.
+        ;
+        real "REAL" [
+            -3.4000000953674316
+            -1.2000000476837158
+            0.0
+            5.599999904632568
+            7.800000190734863
+        ]
+        float "FLOAT(20)" [
+            -3.4000000953674316
+            -1.2000000476837158
+            0.0
+            5.599999904632568
+            7.800000190734863
+        ]
+    ] else '[
+        real "REAL" [-3.4 -1.2 0.0 5.6 7.8]
+        float "FLOAT(20)" [-3.4 -1.2 0.0 5.6 7.8]
+    ]))
 
     ((if is-firebird '[  ; throws in word "precision"
         double "DOUBLE PRECISION" [-3.4 -1.2 0.0 5.6 7.8]
@@ -146,8 +168,8 @@ tables: compose [
     ; will perceive the column as a string.  Don't use BINARY in Firebird ODBC.
     ;
     ((if not is-firebird '[
-    binary "BINARY(3)" [#{000000} #{010203} #{FFFFFF}]
-    varbinary "VARBINARY(10)" [#{} #{010203} #{DECAFBADCAFE}]
+        binary "BINARY(3)" [#{000000} #{010203} #{FFFFFF}]
+        varbinary "VARBINARY(10)" [#{} #{010203} #{DECAFBADCAFE}]
     ]))
 
     ; Firebird appears to conflate empty blobs with nulls in the ODBC driver.
