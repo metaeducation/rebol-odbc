@@ -52,12 +52,19 @@ is-mysql: did find system.script.args "--mysql"
 is-firebird: did find system.script.args "--firebird"
 
 tables: compose [
-    ((if not is-sqlite '[
+    ;
+    ; Note: Although MySQL supports BOOLEAN it is just a synonym for TINYINT(1)
+    ; so it would give back 0 and 1, not false and true.  (Firebird has a
+    ; distinct boolean type.)
+    ;
+    ((if is-firebird '[
         boolean "BOOLEAN" [#[false] #[true]]
     ]))
 
     ; The BIT type can be parameterized with how many bits to store, and can
     ; be more compact than a BOOLEAN.
+    ;
+    ; !!! Should this map to BITSET, if it can have a size, vs. LOGIC! ?
     ;
     ((if not is-firebird '[
         bit "BIT" [#[false] #[true]]
