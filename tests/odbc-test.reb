@@ -46,6 +46,8 @@ Rebol [
 ]
 
 show-sql?: did find system.script.args "--show-sql"
+leave-connected?: did find system.script.args "--leave-connected"
+list-tables?: did find system.script.args "--list-tables"
 
 is-sqlite: did find system.script.args "--sqlite"
 is-mysql: did find system.script.args "--mysql"
@@ -254,9 +256,9 @@ trap [
             {)}
         ]
 
-        ; If you wanted to see the table list you could dump it here.
-        ;
-        comment [
+        === LIST TABLES IF REQUESTED ===
+
+        if list-tables? [
             insert statement ['tables]
             probe copy statement
         ]
@@ -303,8 +305,20 @@ trap [
         print newline
     ]
 
-    close statement
-    close connection
+    ; Being a GC-oriented language, we might have code paths that don't close
+    ; connections and thus we only find out about leaked C entities when the
+    ; GC is being shut down--after things like the ODBC extension are unloaded.
+    ; There's special handling for this, that neutralizes the data pointed to
+    ; by the HANDLE!s during ODBC extension shutdown.  We sometimes test that
+    ; to make sure the system doesn't panic on exit if you omit the close.
+    ;
+    if leave-connected? [
+        print "!!! --LEAVE-CONNECTED, ODBC CONNECTION LIVE DURING SHUTDOWN !!!"
+    ]
+    else [
+        close statement
+        close connection
+    ]
 ]
 then (func [e] [
     print ["Test had an error:" mold e]

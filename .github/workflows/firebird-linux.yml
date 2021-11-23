@@ -145,3 +145,7 @@ jobs:
     - name: ODBC Firebird Insert And Retrieve Test
       run: |
         r3 tests/odbc-test.reb rebol-firebird --firebird
+
+    - name: ODBC Test Without Closing Connection
+      run: |
+        r3 tests/odbc-test.reb rebol-firebird --firebird --leave-connected
