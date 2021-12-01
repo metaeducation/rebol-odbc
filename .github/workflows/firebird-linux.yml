@@ -60,6 +60,30 @@ jobs:
         bash -e tools/install-odbc-tools.sh
 
 
+    - name: Create Test Database With Access for Test Account
+      run: |
+        # Was getting error: "Statement failed, SQLSTATE = 08001"
+        # This was the suggested fix: https://dba.stackexchange.com/a/64752
+        # But it seems like it redundantly says:
+        #
+        #    Adding user `runner' to group `firebird' ...
+        #    Adding user runner to group firebird
+        #    Done.
+        #
+        echo "Adding user!"
+        sudo adduser `id -un` firebird
+
+        # Need sudo privileges to run the Firebird SQL without a password (we
+        # don't know the admin password as it was randomly generated).
+        #
+        echo "Creating Database!"
+        echo "CREATE DATABASE \"test.fdb\";" | sudo isql-fb
+        sudo chmod 777 test.fdb
+
+        echo "Creating User!"
+        echo "CREATE USER test PASSWORD 'test-password';" | sudo isql-fb 127.0.0.1:test.fdb
+
+
     - name: Install Firebird ODBC
       run: |
         # This is required to *build* the Firebird ODBC driver (the autodetect
@@ -67,14 +91,6 @@ jobs:
         # be important beyond that, but do it anyway.
         #
         sudo ln -s /usr/lib/x86_64-linux-gnu/firebird/3.0/lib/libfbclient.so.2 /usr/lib/libfbclient.so
-
-        # Need sudo privileges to run the Firebird SQL without a password (we
-        # don't know the admin password as it was randomly generated).
-        #
-        echo "CREATE DATABASE \"test.fdb\";" | sudo isql-fb
-        sudo chmod 777 test.fdb
-
-        echo "CREATE USER test PASSWORD 'test-password';" | sudo isql-fb test.fdb
 
         # TBD: Find a way to get a copy of the Firebird ODBC driver libOdbcFb.so
         # Currently it's distributed via SourceForge (which sucks and has no
@@ -104,8 +120,17 @@ jobs:
         # We don't set the UID or PWD here on Linux even though it is allowed,
         # as Windows does not allow it.  It must be in the connection string.
         #
+        # IMPORTANT: If we do not include a hostname (or IP address) as part of
+        # the hostname it tries to open the file without making a request of
+        # the server.  Since the server has the file locked, this will fail.
+        # So we ask for 127.0.0.1 to force it to go via the server's access.
+        # Otherwise we would get something like:
+        #
+        #    I/O error during "lock" operation for file "security.db"
+        #    -Database already opened with engine instance, ...
+        #
         sudo myodbc-installer -s -a -c2 -n "rebol-firebird" \
-            -t "DRIVER=Firebird;DBNAME=$(pwd)/test.fdb;ROLE=;CHARACTERSET=;READONLY=No;NOWAIT=No"
+            -t "DRIVER=Firebird;DBNAME=127.0.0.1:$(pwd)/test.fdb;ROLE=;CHARACTERSET=;READONLY=No;NOWAIT=No"
 
         # We must access via `test` user without root rights.
         # There is a need to be able to create lockfiles in the tmp directory.
