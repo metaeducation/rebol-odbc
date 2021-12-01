@@ -103,7 +103,11 @@ jobs:
 
         #wget http://example.com/wherever/libOdbcFb-some-version.so
         #sudo mv libOdbcFb-some-version.so /usr/lib/libOdbcFb.so
-        echo "Temp Fake Odbc Driver File" > /usr/lib/libOdbcFb.so
+        #echo "Temp Fake Odbc Driver File" > /usr/lib/libOdbcFb.so
+
+        wget http://hostilefork.com/media/shared/firebird/libOdbcFb.so
+        sudo mv libOdbcFb.so /usr/lib/libOdbcFb.so
+
 
         # IIRC this was needed to at some point because the ODBC client was not
         # finding the firebird client under its name, but called it "libgds.so"
@@ -136,13 +140,13 @@ jobs:
         # There is a need to be able to create lockfiles in the tmp directory.
         # !!! Is there a better way to do this?
         #
-        chmod 777 /tmp/firebird
-        chmod 777 /tmp/firebird/fb_init
+        sudo chmod 777 /tmp/firebird
+        sudo chmod 777 /tmp/firebird/fb_init
 
         # Try a CREATE TABLE statement without root privileges
         #
         echo "CREATE TABLE simple (id int not null primary key);" \
-          | isql-fb -user test -password test-password test.fdb
+          | isql-fb -user test -password test-password 127.0.0.1:test.fdb
 
 
   #====# SANITY CHECK ODBC #=================================================#
