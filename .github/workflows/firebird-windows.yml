@@ -1,0 +1,214 @@
+#
+# %firebird-windows.yml
+#
+
+name: Firebird Windows ODBC
+
+
+on:
+  push:
+    branches: [
+      master
+    ]
+  pull_request:
+    branches: [
+      master
+    ]
+  workflow_dispatch:  # Allows running this workflow manually from Actions tab
+
+
+# We use bash by default in Ren-C workflows, even on Windows
+#
+defaults:
+  run:
+    shell: bash
+
+
+jobs:
+  firebird-windows-odbc:
+
+    runs-on: windows-latest
+
+    steps:
+
+  #====# CHECKOUT STEPS #=====================================================#
+
+    # GitHub CI checkout on Windows auto translates LF to CR/LF in files:
+    #
+    # https://github.com/actions/checkout/issues/135
+    #
+    # However, Ren-C is taking the long view on this and prohibiting CR/LF in
+    # source by default.
+    #
+    # https://forum.rebol.info/t/newlina-non-grata/1207
+    # https://forum.rebol.info/t/1264
+    #
+    - name: Disable LF to CRLF Auto Translation In Git
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+
+
+    # https://github.com/actions/checkout
+    #
+    # See README: Checkout Action
+    #
+    - uses: actions/checkout@v2  # See README: Trusted Actions
+
+
+  #====# FIREBIRD INSTALLATION #==============================================#
+
+    # Firebird does not have an .msi file, but its .exe installer has modes for
+    # being "silent":
+    #
+    #   http://www.firebirdfaq.org/faq193/
+    #
+    # Default Administrative Account when installing like this:
+    #
+    #    -user sysdba
+    #    -password masterkey
+    #
+    - name: Install Firebird 3.0.8
+      shell: cmd  # !!! seems to hang if you use bash for Windows
+      run: |
+        curl -o firebird-3.0.8.exe -L https://github.com/FirebirdSQL/firebird/releases/download/v3.0.8/Firebird-3.0.8.33535_0_x64.exe
+        .\firebird-3.0.8.exe /VERYSILENT
+
+
+    # Historically Firebird had a bin directory, but it seems that is not true
+    # any more...files like isql.exe are in the top level Firebird_3_0 dir.
+    #
+    - name: Add Firebird's isql and tools to the path
+      run: |
+        echo "C:/Program Files/Firebird/Firebird_3_0/" >> $GITHUB_PATH
+
+
+    - name: Create Test Database
+      run: |
+        # Was getting error: "Statement failed, SQLSTATE = 08001"
+        # This was the suggested fix: https://dba.stackexchange.com/a/64752
+        # But it seems like it redundantly says:
+        #
+        #    Adding user `runner' to group `firebird' ...
+        #    Adding user runner to group firebird
+        #    Done.
+        #
+        #echo "Adding user!"
+        #sudo adduser `id -un` firebird
+
+        # Need sudo privileges to run the Firebird SQL without a password (we
+        # don't know the admin password as it was randomly generated).
+        #
+        echo "CREATE DATABASE \"test.fdb\";" | isql -user sysdba -password masterkey
+        ls
+        #sudo chmod 777 test.fdb
+
+
+    # Here we also test connecting via the IP address to the server; on Linux
+    # there was trouble trying to use the embedded database while the server
+    # was running because it held the test.fdb file locked.
+    #
+    - name: Create Test Database
+      run: |
+        echo "CREATE USER test PASSWORD 'test-password';" | isql -user sysdba -password masterkey "127.0.0.1:D:\\a\\rebol-odbc\\rebol-odbc\\test.fdb"
+
+
+    - name: Grant Create Table Privilege To Test User
+      run: |
+        echo "GRANT CREATE TABLE TO USER test;" | isql -user sysdba -password masterkey "127.0.0.1:D:\\a\\rebol-odbc\\rebol-odbc\\test.fdb"
+
+
+  #====# FIREBIRD ODBC DRIVER INSTALLATION #==================================#
+
+    # This installation process is a very abridged version of commands found
+    # in the PyODBC GitHub for installing and caching drivers on AppVeyor:
+    #
+    # https://github.com/mkleehammer/pyodbc/blob/master/appveyor/install.ps1
+
+    - name: Output Already Avaliable ODBC Drivers Before Installation
+      if: false  # This is slow, debug only
+      shell: pwsh  # It's a powershell command
+      run: |
+        Write-Output ""
+        Write-Output "*** Installed ODBC drivers:"
+        Get-OdbcDriver
+
+    # Apache Servers can be difficult to configure to serve .exe files
+    # Rather than figure out how to do that (and then have trouble again if the
+    # location changed to another server where it's beyond control), it's .gz
+    #
+    # Both the 32-bit and 64-bit ODBC drivers are installed, with the name:
+    #
+    #    "Firebird/InterBase(r) driver"
+    #
+    - name: Install Firebird ODBC
+      shell: cmd  # !!! Firebird's installers hang on bash for Windows!
+      run: |
+        curl -o firebird-odbc.exe.gz -L http://hostilefork.com/media/shared/firebird/Firebird_ODBC_2.0.5.156_x64.exe.gz
+        7z e firebird-odbc.exe.gz
+
+        rem Extracts Under the Original Compressed Name
+        .\Firebird_ODBC_2.0.5.156_x64.exe /VERYSILENT
+
+
+    - name: Output ODBC Drivers After Installation
+      if: false  # This is slow, debug only
+      shell: pwsh  # It's a powershell command
+      run: |
+        Write-Output ""
+        Write-Output "*** Installed ODBC drivers:"
+        Get-OdbcDriver
+
+
+    # ODBC DSN adding is done in PowerShell...an older tool called ODBCCONF.exe
+    # is deprecated:
+    #
+    # https://docs.microsoft.com/en-us/sql/odbc/odbcconf-exe
+    #
+    # Windows does not permit storing the UID or PWD in the DSN entry itself,
+    # so it must be provided by the connection.
+    #
+    # This had "ROLE=" and CHARSET=" in the Linux version, but on PowerShell
+    # it doesn't like blank entries.
+    #
+    - name: Register DSN Using PowerShell
+      shell: pwsh
+      run: |
+        Add-OdbcDsn `
+          -Name "rebol-firebird" `
+          -DriverName "Firebird/InterBase(r) driver" `
+          -Platform "64-bit" `
+          -DsnType "System" `
+          -SetPropertyValue @( `
+            "DBNAME=127.0.0.1:D:\a\rebol-odbc\rebol-odbc\test.fdb", `
+            "READONLY=No", `
+            "NOWAIT=No" `
+          )
+
+
+  #====# INSTALL R3 INTERPRETER #=============================================#
+
+    - name: Download and Cache the Interpreter
+      uses: metaeducation/ren-c-action@release
+      with:
+        checked: true
+
+
+  #====# TEST STEPS #==========================================================#
+
+    # The tests are designed to call QUIT and return 1 status on failure, with
+    # 0 returned on success.
+
+    # For starters, this is a basic insert and retrieve test of Rebol values.
+    # The goal is to store Rebol values into column types that can hold them,
+    # and then read the same value back out after writing it.
+    #
+    # This runs against the DSNs of the Firebird database created above.
+    #
+    - name: ODBC MySQL Insert And Retrieve Test
+      run: |
+        r3 tests/odbc-test.reb rebol-firebird --firebird
+
+    - name: ODBC Test Without Closing Connection
+      run: |
+        r3 tests/odbc-test.reb rebol-firebird --firebird --leave-connected
