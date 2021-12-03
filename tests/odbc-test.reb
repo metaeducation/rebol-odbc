@@ -198,8 +198,8 @@ trap [
 
     print ["Opening DSN:" dsn]
 
-    connection: open (any [is-sqlite] then [
-        join odbc:// dsn  ; no user or password for sqlite or gchiu firebird
+    connection: open (any [is-sqlite is-firebird] then [
+        join odbc:// dsn  ; no user or password for sqlite or firebird
     ] else [
         join odbc:// reduce [dsn ";UID=test;PWD=test-password"]
     ])
