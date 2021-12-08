@@ -149,7 +149,7 @@ tables: compose [
     timestamp "TIMESTAMP" [30-May-2017/14:23:08 12-Dec-2012/00:00]
 
     char "CHAR(3)" ["abc" "def" "ghi"]
-    varchar "VARCHAR(10)" ["" "abc" "defgh" "jklmnopqrs"]
+    varchar "VARCHAR(10)" ["" "abc" "defgh" "jklmnopqrs" "zxy'vu" "rst''klm"]
     ((if is-sqlite '[
         ;
         ; LONGVARCHAR is considered a "legacy type", and not supported by most
