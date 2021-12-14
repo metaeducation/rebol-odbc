@@ -208,7 +208,7 @@ trap [
 
     sql-execute: specialize :odbc-execute [  ; https://forum.rebol.info/t/1234
         statement: statement
-        verbose: if show-sql? [#]
+        verbose: #  ; if show-sql? [#]
     ]
 
     ; Despite the database being specified in the odbc.ini, it appears that
@@ -222,7 +222,7 @@ trap [
     ; https://stackoverflow.com/q/5634501/
     ;
     if is-mysql [
-        sql-execute {USE test}
+        sql-execute [USE test]
     ]
 
     for-each [label sqltype content] tables [
@@ -231,7 +231,7 @@ trap [
         === DROP TABLE IF IT EXISTS ===
 
         trap [
-            sql-execute [{DROP TABLE} table-name]
+            sql-execute [DROP TABLE ^table-name]
         ]
 
         === CREATE TABLE ===
@@ -250,10 +250,10 @@ trap [
             true ["AUTO_INCREMENT"]
         ]
         sql-execute [
-            {CREATE TABLE} table-name {(}
-                {id} {INTEGER} auto-increment {PRIMARY KEY} {NOT NULL} {,}
-                {val} sqltype {NOT NULL}
-            {)}
+            CREATE TABLE ^table-name (
+                id INTEGER ^auto-increment PRIMARY KEY NOT NULL,
+                val ^sqltype NOT NULL
+            )
         ]
 
         === LIST TABLES IF REQUESTED ===
@@ -272,7 +272,7 @@ trap [
         print mold content
         for-each value content [
             sql-execute [
-                {INSERT INTO} table-name {(val)} {VALUES} {(} ^value {)}
+                INSERT INTO ^table-name (val) VALUES (@value)
             ]
         ]
 
@@ -281,7 +281,7 @@ trap [
         ; Make sure the values that come back are the same
         ;
         sql-execute [
-            {SELECT val FROM} table-name
+            SELECT val FROM ^table-name
         ]
 
         rows: copy statement
@@ -320,10 +320,10 @@ trap [
         close connection
     ]
 ]
-then (func [e] [
+then e -> [
     print ["Test had an error:" mold e]
     quit 1
-])
+]
 
 if mismatches <> 0 [
     fail [mismatches "out of" total "tests did not match original data"]
