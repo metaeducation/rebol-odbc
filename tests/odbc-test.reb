@@ -230,7 +230,7 @@ trap [
 
         === DROP TABLE IF IT EXISTS ===
 
-        trap [
+        sys.util.rescue [  ; !!! SQL-EXECUTE should return definitional errors!
             sql-execute [DROP TABLE ^table-name]
         ]
 
