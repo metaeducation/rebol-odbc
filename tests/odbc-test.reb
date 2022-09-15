@@ -222,7 +222,7 @@ trap [
     ; https://stackoverflow.com/q/5634501/
     ;
     if is-mysql [
-        sql-execute [USE test]
+        sql-execute {USE test}  ; could say [USE test], but try passing string
     ]
 
     for-each [label sqltype content] tables [
