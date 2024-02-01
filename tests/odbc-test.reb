@@ -60,7 +60,7 @@ tables: compose [
     ; distinct boolean type.)
     ;
     (if is-firebird [spread [
-        boolean "BOOLEAN" [#[false] #[true]]
+        boolean "BOOLEAN" [~false~ ~true~]
     ]])
 
     ; The BIT type can be parameterized with how many bits to store, and can
@@ -69,7 +69,7 @@ tables: compose [
     ; !!! Should this map to BITSET, if it can have a size, vs. LOGIC! ?
     ;
     (if not is-firebird [spread [
-        bit "BIT" [#[false] #[true]]
+        bit "BIT" [~false~ ~true~]
     ]])
 
     (if not is-firebird [spread [  ; Firebird does not have TINYINT
@@ -203,6 +203,8 @@ trap [
     ] else [
         join odbc:// spread reduce [dsn ";UID=test;PWD=test-password"]
     ])
+
+    print ["DSN Successfully Opened."]
 
     statement: odbc-statement-of connection
 
