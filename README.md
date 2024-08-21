@@ -44,9 +44,10 @@ On Mac, it seems HomeBrew will install the headers when you merely say:
 The original code from which this extension is derived is Copyright (C)
 Christian Ensel 2010-2012, and was under an "As Is" License.
 
-Subsequent modifications are Copyright (C) 2012-2019 Rebol Open Source
-Contributors, and the extension is licensed under the Apache2 License--the
-same as the Rebol 3 Core.
+Subsequent modifications are Copyright (C) 2012-2024 Rebol Open Source
+Contributors, and the extension is licensed under the Lesser GPL 3.0
+
+  https://www.gnu.org/licenses/lgpl-3.0.html
 
 ## Future Directions
 
