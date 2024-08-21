@@ -4,19 +4,21 @@ ODBC is an abstraction layer for communicating with databases, originating
 from Microsoft in the 1990s but commonly available on Linux and other
 platforms as well:
 
-https://en.wikipedia.org/wiki/Open_Database_Connectivity
+  https://en.wikipedia.org/wiki/Open_Database_Connectivity
 
 Integration with ODBC was a commercial feature of Rebol2/Command:
 
-http://www.rebol.com/docs/database.html 
+  http://www.rebol.com/docs/database.html
 
 Though it was not included in R3-Alpha, Christian Ensel published code to
 interface with "hostkit" to provide some of the functionality:
 
-https://github.com/gurzgri/r3-odbc/
+  https://github.com/gurzgri/r3-odbc/
 
 That code was taken as the starting point for developing an ODBC extension
-against the modern "libRebol" API.
+against the modern "libRebol" API.  In November of 2023, it achieved the
+goal of compiling solely against the external API, without access to any
+internal structures or functions.
 
 ## Building
 
@@ -47,10 +49,6 @@ Contributors, and the extension is licensed under the Apache2 License--the
 same as the Rebol 3 Core.
 
 ## Future Directions
-
-A big goal for the ODBC Extension is to make it completely use the libRebol
-API, without needing to reach into the structure of cells via the %sys-core.h
-header file.  As the API has become more flexible this process is ongoing.
 
 Right now if you build a Rebol with the ODBC extension statically, then that
 Rebol will require the ODBC shared libraries or DLLs to be present on the
