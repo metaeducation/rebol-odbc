@@ -233,7 +233,7 @@ sys.util/recover [
         === DROP TABLE IF IT EXISTS ===
 
         sys.util/recover [  ; !!! SQL-EXECUTE should return definitional errors!
-            sql-execute [DROP TABLE ^table-name]
+            sql-execute [DROP TABLE $table-name]
         ]
 
         === CREATE TABLE ===
@@ -252,9 +252,9 @@ sys.util/recover [
             true ["AUTO_INCREMENT"]
         ]
         sql-execute [
-            CREATE TABLE ^table-name (
-                id INTEGER ^(opt auto-increment) PRIMARY KEY NOT NULL,
-                val ^sqltype NOT NULL
+            CREATE TABLE $table-name (
+                id INTEGER $(opt auto-increment) PRIMARY KEY NOT NULL,
+                val $sqltype NOT NULL
             )
         ]
 
@@ -274,7 +274,7 @@ sys.util/recover [
         print mold content
         for-each 'value content [
             sql-execute [
-                INSERT INTO ^table-name (val) VALUES (@value)
+                INSERT INTO $table-name (val) VALUES (@value)
             ]
         ]
 
@@ -283,7 +283,7 @@ sys.util/recover [
         ; Make sure the values that come back are the same
         ;
         sql-execute [
-            SELECT val FROM ^table-name
+            SELECT val FROM $table-name
         ]
 
         let rows: copy statement
