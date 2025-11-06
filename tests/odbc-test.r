@@ -12,7 +12,7 @@ Rebol [
         just passes through the query strings as-is, really this is most of
         what an interface has to handle.
 
-        Use: r3 test-odbc.reb dsn --firebird --show-sql
+        Use: r3 test-odbc.r dsn --firebird --show-sql
     }
     Notes: {
       * This test supports Firebird even though it is non-standard, because

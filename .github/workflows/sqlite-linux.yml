@@ -108,8 +108,8 @@ jobs:
     #
     - name: ODBC Sqlite Insert And Retrieve Test
       run: |
-        r3 tests/odbc-test.reb rebol-sqlite --sqlite
+        r3 tests/odbc-test.r rebol-sqlite --sqlite
 
     - name: ODBC Test Without Closing Connection
       run: |
-        r3 tests/odbc-test.reb rebol-sqlite --sqlite --leave-connected
+        r3 tests/odbc-test.r rebol-sqlite --sqlite --leave-connected
