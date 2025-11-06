@@ -1,6 +1,6 @@
 Rebol [
-    Title: "ODBC Test Script"
-    Description: {
+    title: "ODBC Test Script"
+    description: --[
         This script does some basic table creation, assuming you have
         configured an ODBC connection that has a "test" database inside it.
         Then it queries to make sure it can get the data back out.
@@ -13,8 +13,8 @@ Rebol [
         what an interface has to handle.
 
         Use: r3 test-odbc.r dsn --firebird --show-sql
-    }
-    Notes: {
+    ]--
+    notes: --[
       * This test supports Firebird even though it is non-standard, because
         prominent user @gchiu has used it for decades, including in the
         Synapse EHR product.  Here is a summary of its quirky mappings; we
@@ -38,11 +38,11 @@ Rebol [
 
         This file sticks to a lowest-common denominator of naming without
         quotes, rather than do conditional delimiting based on ODBC source.
-    }
+    ]--
 ]
 
-(dsn: match text! first system.script.args) else [
-    fail "Data Source Name (DSN) must be text string on command line"
+dsn: (match text! first system.script.args) else [
+    panic "Data Source Name (DSN) must be text string on command line"
 ]
 
 show-sql?: did find system.script.args "--show-sql"
@@ -59,20 +59,20 @@ tables: compose [
     ; so it would give back 0 and 1, not false and true.  (Firebird has a
     ; distinct boolean type.)
     ;
-    (if is-firebird [spread [
-        boolean "BOOLEAN" [~false~ ~true~]
+    (when is-firebird [spread [
+        boolean "BOOLEAN" [false true]
     ]])
 
     ; The BIT type can be parameterized with how many bits to store, and can
     ; be more compact than a BOOLEAN.
     ;
-    ; !!! Should this map to BITSET, if it can have a size, vs. LOGIC! ?
+    ; !!! Should this map to BITSET, if it can have a size, vs. WORD! ?
     ;
-    (if not is-firebird [spread [
-        bit "BIT" [~false~ ~true~]
+    (when not is-firebird [spread [
+        bit "BIT" [false true]
     ]])
 
-    (if not is-firebird [spread [  ; Firebird does not have TINYINT
+    (when not is-firebird [spread [  ; Firebird does not have TINYINT
         tinyint_s "TINYINT" [-128 -10 0 10 127]
         tinyint_u "TINYINT UNSIGNED" [0 10 20 30 255]
     ]])
@@ -81,7 +81,7 @@ tables: compose [
     integer_s "INT" [-2147483648 -10 0 10 2147483647]
     bigint_s "BIGINT" [-9223372036854775808 -10 0 10 9223372036854775807]
 
-    (if not is-firebird [spread [  ; Firebird lacks unsigned types
+    (when not is-firebird [spread [  ; Firebird lacks unsigned types
         smallint_u "SMALLINT UNSIGNED" [0 10 20 30 65535]
         integer_u "INT UNSIGNED" [0 10 20 30 4294967295]
 
@@ -193,24 +193,24 @@ tables: compose [
 mismatches: 0
 total: 0
 
-trap [
-    odbc-set-char-encoding 'ucs-2
+sys.util/recover [
+    odbc-set-char-encoding 'utf-16
 
     print ["Opening DSN:" dsn]
 
-    connection: open (any [is-sqlite] then [
-        join odbc:// dsn  ; no user or password for sqlite or gchiu firebird
+    let connection: open (any [is-sqlite] then [
+        compose odbc://(dsn)  ; no user/password for sqlite or gchiu firebird
     ] else [
-        join odbc:// spread reduce [dsn ";UID=test;PWD=test-password"]
+        compose odbc://(dsn);UID=test;PWD=test-password
     ])
 
     print ["DSN Successfully Opened."]
 
-    statement: odbc-statement-of connection
+    let statement: odbc-statement-of connection
 
-    sql-execute: specialize :odbc-execute [  ; https://forum.rebol.info/t/1234
+    let sql-execute: specialize odbc-execute/ [  ; https://forum.rebol.info/t/1234
         statement: statement
-        verbose: #  ; if show-sql? [#]
+        verbose: okay  ; if show-sql? [okay]
     ]
 
     ; Despite the database being specified in the odbc.ini, it appears that
@@ -224,15 +224,15 @@ trap [
     ; https://stackoverflow.com/q/5634501/
     ;
     if is-mysql [
-        sql-execute {USE test}  ; could say [USE test], but try passing string
+        sql-execute "USE test"  ; could say [USE test], but try passing string
     ]
 
     for-each [label sqltype content] tables [
-        let table-name: unspaced [{test_} label]
+        let table-name: compose "test_(label)"
 
         === DROP TABLE IF IT EXISTS ===
 
-        sys.util.rescue [  ; !!! SQL-EXECUTE should return definitional errors!
+        sys.util/recover [  ; !!! SQL-EXECUTE should return definitional errors!
             sql-execute [DROP TABLE ^table-name]
         ]
 
@@ -253,7 +253,7 @@ trap [
         ]
         sql-execute [
             CREATE TABLE ^table-name (
-                id INTEGER ^(maybe auto-increment) PRIMARY KEY NOT NULL,
+                id INTEGER ^(opt auto-increment) PRIMARY KEY NOT NULL,
                 val ^sqltype NOT NULL
             )
         ]
@@ -272,7 +272,7 @@ trap [
         ;
         print ["Inserting as" sqltype]
         print mold content
-        for-each value content [
+        for-each 'value content [
             sql-execute [
                 INSERT INTO ^table-name (val) VALUES (@value)
             ]
@@ -286,9 +286,9 @@ trap [
             SELECT val FROM ^table-name
         ]
 
-        rows: copy statement
-        actual: copy []
-        for-each row rows [
+        let rows: copy statement
+        let actual: copy []
+        for-each 'row rows [
             assert [1 = length of row]
             append actual first row
         ]
@@ -328,7 +328,7 @@ then e -> [
 ]
 
 if mismatches <> 0 [
-    fail [mismatches "out of" total "tests did not match original data"]
+    panic [mismatches "out of" total "tests did not match original data"]
 ]
 
 quit 0  ; return code is heeded by test caller
