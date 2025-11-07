@@ -7,7 +7,7 @@
 # https://dev.mysql.com/doc/connector-odbc/en/connector-odbc-installation-binary-unix-tarball.html
 #
 
-sudo apt install libodbc1  # for getting libodbc.so.2
+sudo apt install libodbc2  # for getting libodbc.so.2
 
 export MYODBC_DOWNLOAD=mysql-connector-odbc-8.0.17-linux-debian10-x86-64bit
 export MYODBC_VERSION=8.0
