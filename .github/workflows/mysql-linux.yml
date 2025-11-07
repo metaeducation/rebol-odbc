@@ -78,36 +78,16 @@ jobs:
 
     # On most modern Debian/Ubuntu systems, there is no official MySQL ODBC
     # driver package (like mysql-connector-odbc) in the default repositories.
-    # You have to download and register it manually.
+    # There are .deb packages available from MySQL.
     #
-    - name: Download and extract MySQL ODBC driver
+    - name: Install MySQL ODBC Driver From Debian Package
       run: |
-        export MYODBC_DOWNLOAD=mysql-connector-odbc-8.0.17-linux-debian10-x86-64bit
-        export MYODBC_VERSION=8.0
-        export MYODBC_FILE=libmyodbc8w.so
-        wget --quiet https://dev.mysql.com/get/Downloads/Connector-ODBC/${MYODBC_VERSION}/${MYODBC_DOWNLOAD}.tar.gz
-        tar xzf ${MYODBC_DOWNLOAD}.tar.gz
-        sudo cp ${MYODBC_DOWNLOAD}/lib/${MYODBC_FILE} /usr/local/lib/
-        echo "MYODBC_VERSION=$MYODBC_VERSION" >> $GITHUB_ENV
-        echo "MYODBC_FILE=$MYODBC_FILE" >> $GITHUB_ENV
+        wget --quiet https://dev.mysql.com/get/Downloads/Connector-ODBC/9.1/mysql-connector-odbc_9.1.0-1ubuntu24.04_amd64.deb
 
+        sudo dpkg -i mysql-connector-odbc_9.1.0-1ubuntu24.04_amd64.deb
+        sudo apt-get install -f -y  # To fix any missing dependencies
 
-    # Update the dynamic linker cache (without this, the file may not be found
-    # by the ODBC layer)
-    #
-    - name: Update the Dynamic Linker Cache
-      run: |
-        ls -l /usr/local/lib/libmyodbc8w.so
-        ldd /usr/local/lib/libmyodbc8w.so  # show if dependencies not found
-        sudo ldconfig
-
-
-    - name: Register MySQL ODBC Driver
-      run: |
-        echo "[MySQL ODBC ${MYODBC_VERSION} Driver]
-        Description=MySQL ODBC Driver
-        Driver=/usr/local/lib/${MYODBC_FILE}
-        " | sudo tee -a /etc/odbcinst.ini
+        echo "MYODBC_DRIVER_SPEC=/usr/lib/x86_64-linux-gnu/odbc/libmyodbc9w.so" >> $GITHUB_ENV
 
 
     # ODBC does not like letting you use the root account w/no password as
@@ -120,7 +100,7 @@ jobs:
     #
     - name: Grant Privileges To Test Account
       run: |
-        # MySQL 8.0 Requires CREATE USER and GRANT PRIVILEGES as separate steps
+        # MySQL Requires CREATE USER and GRANT PRIVILEGES as separate steps
         #
         echo "CREATE USER 'test'@'localhost' IDENTIFIED BY 'test-password';" | sudo mysql --password=root --host=127.0.0.1
         echo "GRANT ALL PRIVILEGES ON *.* TO 'test'@'localhost';" | sudo mysql --password=root --host=127.0.0.1
@@ -156,7 +136,7 @@ jobs:
       run: |
         echo "[rebol-mysql]
         Description=MySQL ODBC DSN
-        Driver=MySQL ODBC ${MYODBC_VERSION} Driver
+        Driver=${MYODBC_DRIVER_SPEC}
         SERVER=localhost
         DATABASE=test
         " | sudo tee -a /etc/odbc.ini
