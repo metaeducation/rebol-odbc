@@ -55,7 +55,7 @@ jobs:
 
     - name: Install ODBC
       run: |
-        sudo apt install -y unixodbc libodbc2
+        sudo apt install -y unixodbc libodbc2 odbcinst
 
 
     - name: Create Test Database With Access for Test Account

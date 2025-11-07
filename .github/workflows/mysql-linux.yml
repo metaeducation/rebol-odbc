@@ -64,7 +64,7 @@ jobs:
 
     - name: Install ODBC
       run: |
-        sudo apt install -y unixodbc libodbc2
+        sudo apt install -y unixodbc libodbc2 odbcinst
 
 
     # On most modern Debian/Ubuntu systems, there is no official MySQL ODBC
