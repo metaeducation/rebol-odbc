@@ -20,6 +20,13 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        DRIVER_VARIANT: [mysql, mariadb]
+
+    env:
+      DRIVER_VARIANT: ${{ matrix.DRIVER_VARIANT }}
+
     steps:
 
   #====# ACCELERATE APT INSTALL STEPS #=======================================#
@@ -81,6 +88,7 @@ jobs:
     # There are .deb packages available from MySQL.
     #
     - name: Install MySQL ODBC Driver From Debian Package
+      if: env.DRIVER_VARIANT == 'mysql'
       run: |
         wget --quiet https://dev.mysql.com/get/Downloads/Connector-ODBC/9.1/mysql-connector-odbc_9.1.0-1ubuntu24.04_amd64.deb
 
@@ -88,6 +96,21 @@ jobs:
         sudo apt-get install -f -y  # To fix any missing dependencies
 
         echo "MYODBC_DRIVER_SPEC=/usr/lib/x86_64-linux-gnu/odbc/libmyodbc9w.so" >> $GITHUB_ENV
+
+
+    # The MariaDB ODBC driver is an alternative to the MySQL one, and can
+    # often be used as a drop-in replacement.  It is available in the default
+    # Ubuntu repositories.
+    #
+    # Note that `mariadb-connector-odbc` is not the Debian package, but is
+    # direct from MariaDB if you want the latest version.
+    #
+    - name: Install MariaDB ODBC Driver (for that matrix)
+      if: env.DRIVER_VARIANT == 'mariadb'
+      run: |
+        sudo apt install -y odbc-mariadb
+
+        echo "MYODBC_DRIVER_SPEC=/usr/lib/x86_64-linux-gnu/odbc/libmaodbc.so" >> $GITHUB_ENV
 
 
     # ODBC does not like letting you use the root account w/no password as
