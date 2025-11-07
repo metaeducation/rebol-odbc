@@ -83,6 +83,16 @@ jobs:
         echo "MYODBC_FILE=$MYODBC_FILE" >> $GITHUB_ENV
 
 
+    # Update the dynamic linker cache (without this, the file may not be found
+    # by the ODBC layer)
+    #
+    - name: Update the Dynamic Linker Cache
+      run: |
+        ls -l /usr/local/lib/libmyodbc8w.so
+        ldd /usr/local/lib/libmyodbc8w.so  # show if dependencies not found
+        sudo ldconfig
+
+
     - name: Register MySQL ODBC Driver
       run: |
         echo "[MySQL ODBC ${MYODBC_VERSION} Driver]
