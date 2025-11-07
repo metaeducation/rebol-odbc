@@ -160,7 +160,7 @@ tables: compose [
 
     char "CHAR(3)" ["abc" "def" "ghi"]
     varchar "VARCHAR(10)" ["" "abc" "defgh" "jklmnopqrs" "zxy'vu" "rst''klm"]
-    (if is-sqlite [spread [
+    (when is-sqlite [spread [
         ;
         ; LONGVARCHAR is considered a "legacy type", and not supported by most
         ; modern SQLs, but it is in Sqlite.
@@ -186,7 +186,7 @@ tables: compose [
     ; error.  This creates nonsense on the round trip, because the ODBC layer
     ; will perceive the column as a string.  Don't use BINARY in Firebird ODBC.
     ;
-    (if not is-firebird [spread [
+    (when not is-firebird [spread [
         binary "BINARY(3)" [#{000000} #{010203} #{FFFFFF}]
         varbinary "VARBINARY(10)" [#{} #{010203} #{DECAFBADCAFE}]
     ]])
