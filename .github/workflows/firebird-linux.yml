@@ -99,11 +99,11 @@ jobs:
         # oneself is possible and it seems to run...so we could host it
         # somewhere, but this shows it's an uphill battle to support this.
 
-        #wget http://example.com/wherever/libOdbcFb-some-version.so
+        #wget --quiet http://example.com/wherever/libOdbcFb-some-version.so
         #sudo mv libOdbcFb-some-version.so /usr/lib/libOdbcFb.so
         #echo "Temp Fake Odbc Driver File" > /usr/lib/libOdbcFb.so
 
-        wget http://hostilefork.com/media/shared/firebird/libOdbcFb.so
+        wget --quiet http://hostilefork.com/media/shared/firebird/libOdbcFb.so
         sudo mv libOdbcFb.so /usr/lib/libOdbcFb.so
 
 

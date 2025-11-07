@@ -76,7 +76,7 @@ jobs:
         export MYODBC_DOWNLOAD=mysql-connector-odbc-8.0.17-linux-debian10-x86-64bit
         export MYODBC_VERSION=8.0
         export MYODBC_FILE=libmyodbc8w.so
-        wget https://dev.mysql.com/get/Downloads/Connector-ODBC/${MYODBC_VERSION}/${MYODBC_DOWNLOAD}.tar.gz
+        wget --quiet https://dev.mysql.com/get/Downloads/Connector-ODBC/${MYODBC_VERSION}/${MYODBC_DOWNLOAD}.tar.gz
         tar xzf ${MYODBC_DOWNLOAD}.tar.gz
         sudo cp ${MYODBC_DOWNLOAD}/lib/${MYODBC_FILE} /usr/local/lib/
         echo "MYODBC_VERSION=$MYODBC_VERSION" >> $GITHUB_ENV
