@@ -47,15 +47,15 @@ jobs:
 
     - name: Install Firebird
       run: |
-        sudo apt install firebird3.0-server
-        sudo apt install firebird-dev
+        sudo apt install -y firebird3.0-server
+        sudo apt install -y firebird-dev
 
 
-  #====# SQLITE-ODBC INSTALLATION #===========================================#
+  #====# FIREBIRD-ODBC INSTALLATION #=========================================#
 
-    - name: Install ODBC And myodbc-installer Tool
+    - name: Install ODBC
       run: |
-        bash -e tools/install-odbc-tools.sh
+        sudo apt install -y unixodbc libodbc2
 
 
     - name: Create Test Database With Access for Test Account
@@ -82,7 +82,7 @@ jobs:
         echo "CREATE USER test PASSWORD 'test-password';" | sudo isql-fb 127.0.0.1:test.fdb
 
 
-    - name: Install Firebird ODBC
+    - name: Install Firebird ODBC Driver
       run: |
         # This is required to *build* the Firebird ODBC driver (the autodetect
         # looks for the shared library with no numeric extension).  It may not
@@ -113,9 +113,15 @@ jobs:
         sudo ln -s /usr/lib/x86_64-linux-gnu/libfbclient.so.3.0.2 /usr/lib/libgds.so
 
         # Register the ODBC Driver (edits %/etc/odbcinst.ini)
-        #
-        sudo myodbc-installer -a -d -n "Firebird" \
-            -t "DRIVER=/usr/lib/libOdbcFb.so;SETUP=/usr/lib/libOdbcFb.so;Threading=1;FileUsage=1;CPTimeout=;CPReuse="
+        echo "[Firebird]
+        Description=Firebird ODBC Driver
+        Driver=/usr/lib/libOdbcFb.so
+        Setup=/usr/lib/libOdbcFb.so
+        Threading=1
+        FileUsage=1
+        CPTimeout=
+        CPReuse=
+        " | sudo tee -a /etc/odbcinst.ini
 
         # Register the DSN (edits %/etc/odbc.ini)
         #
@@ -131,8 +137,15 @@ jobs:
         #    I/O error during "lock" operation for file "security.db"
         #    -Database already opened with engine instance, ...
         #
-        sudo myodbc-installer -s -a -c2 -n "rebol-firebird" \
-            -t "DRIVER=Firebird;DBNAME=127.0.0.1:$(pwd)/test.fdb;ROLE=;CHARACTERSET=;READONLY=No;NOWAIT=No"
+        echo "[rebol-firebird]
+        Description=Firebird ODBC DSN
+        Driver=Firebird
+        DBNAME=127.0.0.1:$(pwd)/test.fdb
+        ROLE=
+        CHARACTERSET=
+        READONLY=No
+        NOWAIT=No
+        " | sudo tee -a /etc/odbc.ini
 
         # We must access via `test` user without root rights.
         # There is a need to be able to create lockfiles in the tmp directory.

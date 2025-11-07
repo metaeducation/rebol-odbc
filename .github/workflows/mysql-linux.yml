@@ -62,25 +62,33 @@ jobs:
 
   #====# MYSQL-ODBC INSTALLATION #============================================#
 
-    - name: Install ODBC And myodbc-installer Tool
+    - name: Install ODBC
       run: |
-        source tools/install-odbc-tools.sh
+        sudo apt install -y unixodbc libodbc2
 
-        # The myodbc-installer also includes the MySQL ODBC Driver.
-        # Location set by install-odbc-tools.sh, make known to later steps.
-        #
+
+    # On most modern Debian/Ubuntu systems, there is no official MySQL ODBC
+    # driver package (like mysql-connector-odbc) in the default repositories.
+    # You have to download and register it manually.
+    #
+    - name: Download and extract MySQL ODBC driver
+      run: |
+        export MYODBC_DOWNLOAD=mysql-connector-odbc-8.0.17-linux-debian10-x86-64bit
+        export MYODBC_VERSION=8.0
+        export MYODBC_FILE=libmyodbc8w.so
+        wget https://dev.mysql.com/get/Downloads/Connector-ODBC/${MYODBC_VERSION}/${MYODBC_DOWNLOAD}.tar.gz
+        tar xzf ${MYODBC_DOWNLOAD}.tar.gz
+        sudo cp ${MYODBC_DOWNLOAD}/lib/${MYODBC_FILE} /usr/local/lib/
         echo "MYODBC_VERSION=$MYODBC_VERSION" >> $GITHUB_ENV
         echo "MYODBC_FILE=$MYODBC_FILE" >> $GITHUB_ENV
 
 
-    - name: Install MySQL ODBC Driver
+    - name: Register MySQL ODBC Driver
       run: |
-        # Use the Unicode version, not ANSI.  Note that unixodbc's concept of
-        # "unicode" is not UTF-8, but rather 16-bit WCHAR-based (matching
-        # Windows).
-        #
-        sudo myodbc-installer -a -d -n "MySQL ODBC ${MYODBC_VERSION} Driver" \
-            -t "Driver=/usr/local/lib/${MYODBC_FILE}"
+        echo "[MySQL ODBC ${MYODBC_VERSION} Driver]
+        Description=MySQL ODBC Driver
+        Driver=/usr/local/lib/${MYODBC_FILE}
+        " | sudo tee -a /etc/odbcinst.ini
 
 
     # ODBC does not like letting you use the root account w/no password as
@@ -127,12 +135,15 @@ jobs:
     #
     - name: Register DSN
       run: |
-        sudo myodbc-installer -s -a -c2 -n "rebol-mysql" \
-            -t "DRIVER=MySQL ODBC ${MYODBC_VERSION} Driver;SERVER=localhost;DATABASE=test"
+        echo "[rebol-mysql]
+        Description=MySQL ODBC DSN
+        Driver=MySQL ODBC ${MYODBC_VERSION} Driver
+        SERVER=localhost
+        DATABASE=test
+        " | sudo tee -a /etc/odbc.ini
 
 
   #====# SANITY CHECK ODBC #=================================================#
-
 
     - name: Sanity Check ODBC
       run: |
@@ -140,7 +151,6 @@ jobs:
 
 
   #====# INSTALL R3 INTERPRETER #=============================================#
-
 
     - name: Download and Cache the Interpreter
       uses: metaeducation/ren-c-action@release
@@ -163,6 +173,7 @@ jobs:
     - name: ODBC MySQL Insert And Retrieve Test
       run: |
         r3 tests/odbc-test.r rebol-mysql --mysql
+
 
     - name: ODBC Test Without Closing Connection
       run: |

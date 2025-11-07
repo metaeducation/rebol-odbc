@@ -175,6 +175,7 @@ jobs:
       run: |
         r3 tests/odbc-test.r rebol-mysql --mysql
 
+
     - name: ODBC Test Without Closing Connection
       run: |
         r3 tests/odbc-test.r rebol-mysql --mysql --leave-connected

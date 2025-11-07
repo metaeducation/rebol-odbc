@@ -2,9 +2,9 @@
 # ODBC implementation makes a pretty good reference for comparison.
 # This file is just a simple test, on Ubuntu you should say:
 #
-#     sudo apt install python-pip
+#     sudo apt install -y python-pip
 #     pip install pyodbc
-# 
+#
 # If something works in Python but not Rebol, then just build the
 # pyodbc driver .so file as DEBUG, overwrite it in the lib directory,
 # and then step through it in a debugger to see what the difference is.

@@ -131,6 +131,7 @@ jobs:
         Write-Output "*** Installed ODBC drivers:"
         Get-OdbcDriver
 
+
     # Apache Servers can be difficult to configure to serve .exe files
     # Rather than figure out how to do that (and then have trouble again if the
     # location changed to another server where it's beyond control), it's .gz
@@ -206,6 +207,7 @@ jobs:
     - name: ODBC MySQL Insert And Retrieve Test
       run: |
         r3 tests/odbc-test.r rebol-firebird --firebird
+
 
     - name: ODBC Test Without Closing Connection
       run: |

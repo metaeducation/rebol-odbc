@@ -33,31 +33,30 @@ jobs:
     - uses: actions/checkout@v3  # See README: Trusted Actions
 
 
-  #====# SQLITE INSTALLATION #================================================#
+  #====# SQLITE-ODBC INSTALLATION #===========================================#
 
     - name: Install Sqlite
       run: |
-        sudo apt install sqlite3
-        sudo apt install libsqliteodbc
+        sudo apt install -y sqlite3
 
 
-  #====# SQLITE-ODBC INSTALLATION #===========================================#
-
-    - name: Install ODBC And myodbc-installer Tool
+    - name: Install ODBC
       run: |
-        bash -e tools/install-odbc-tools.sh
+        sudo apt install -y unixodbc libodbc2
 
 
-      # There is a tool called `odbcinst` which supposedly registers ODBC
-      # drivers, but it didn't work in my tests.  `myodbc-installer` did.
-      # So despite it being a MySQL tool, use it for SQLite too.
-      #
-      # Note: a "Setup" key is required for SQLite, for some reason.
-      #
-    - name: Install Sqlite ODBC Driver
+    - name: Install SQLite ODBC Driver
       run: |
-        sudo myodbc-installer -a -d -n "SQLite3 ODBC Driver" \
-          -t "DRIVER=/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so;SETUP=/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so"
+        sudo apt install -y libsqliteodbc
+
+
+    - name: Register DSN
+      run: |
+        echo "[rebol-sqlite]
+        Description=SQLite ODBC
+        Driver=SQLite3
+        Database=$(pwd)/test.db
+        " | sudo tee -a /etc/odbc.ini
 
 
       # You need to run some command to get the database to be created.  This
@@ -69,14 +68,6 @@ jobs:
     - name: Create Sqlite Database File test.db
       run: |
         sqlite3 test.db "VACUUM;"
-
-
-      # Register the DSN.  There are no usernames or passwords in SQLite.
-      #
-    - name: Register DSN
-      run: |
-        sudo myodbc-installer -s -a -c2 -n "rebol-sqlite" \
-          -t "DRIVER=SQLite3 ODBC Driver;DATABASE=$(pwd)/test.db"
 
 
   #====# SANITY CHECK ODBC #=================================================#
@@ -109,6 +100,7 @@ jobs:
     - name: ODBC Sqlite Insert And Retrieve Test
       run: |
         r3 tests/odbc-test.r rebol-sqlite --sqlite
+
 
     - name: ODBC Test Without Closing Connection
       run: |
