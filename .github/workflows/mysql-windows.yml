@@ -6,14 +6,12 @@ name: MySQL Windows ODBC
 
 
 on:
-  #push:
-  #  branches: [
-  #    master
-  #  ]
-  #pull_request:
-  #  branches: [
-  #    master
-  #  ]
+  push:
+    branches:
+      - mysql
+  pull_request:
+    branches:
+      - mysql
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 

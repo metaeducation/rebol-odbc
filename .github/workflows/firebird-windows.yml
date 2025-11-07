@@ -7,13 +7,11 @@ name: Firebird Windows ODBC
 
 on:
   push:
-    branches: [
-      master
-    ]
+    branches:
+      - firebird
   pull_request:
-    branches: [
-      master
-    ]
+    branches:
+      - firebird
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 

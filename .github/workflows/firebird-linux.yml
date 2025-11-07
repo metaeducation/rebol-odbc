@@ -18,14 +18,12 @@ name: Firebird Linux ODBC
 on:
   # Currently never run unless manually requested, given that it doesn't work!
   #
-  #push:
-  #  branches: [
-  #    master
-  #  ]
-  #pull_request:
-  #  branches: [
-  #    master
-  #  ]
+  push:
+    branches:
+     - none
+  pull_request:
+    branches:
+     - none
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 
