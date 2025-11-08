@@ -77,10 +77,10 @@ This produces a parameterized query for the driver:
 Though [as mentioned above](#parameterized-queries), there are many places
 such substitutions won't work:
 
-  table-name: 'audit_log
-  odbc-execute [SELECT * FROM $table-name]
+    table-name: 'audit_log
+    odbc-execute [SELECT * FROM $table-name]
 
-  ; ODBC Driver Manager: `?` syntax error or access violation
+    ; ODBC Driver Manager: `?` syntax error or access violation
 
 To handle cases where the driver does not support `?` substitution, the dialect
 provides a `$[...]` splicing syntax.  The key safety feature is that `$[...]`
