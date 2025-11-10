@@ -87,12 +87,18 @@ jobs:
     # driver package (like mysql-connector-odbc) in the default repositories.
     # There are .deb packages available from MySQL.
     #
+    # Note that there are bugs in handling of empty binary fields in versions
+    # of the connector prior to 9.2.0 ... SQLGetData() will return random
+    # lengths:
+    #
+    # https://dev.mysql.com/doc/relnotes/connector-odbc/en/news-9-2-0.html
+    #
     - name: Install MySQL ODBC Driver From Debian Package
       if: env.DRIVER_VARIANT == 'mysql'
       run: |
-        wget --quiet https://dev.mysql.com/get/Downloads/Connector-ODBC/9.1/mysql-connector-odbc_9.1.0-1ubuntu24.04_amd64.deb
+        wget --quiet https://dev.mysql.com/get/Downloads/Connector-ODBC/9.5/mysql-connector-odbc_9.5.0-1ubuntu24.04_amd64.deb
 
-        sudo dpkg -i mysql-connector-odbc_9.1.0-1ubuntu24.04_amd64.deb
+        sudo dpkg -i mysql-connector-odbc_9.5.0-1ubuntu24.04_amd64.deb
         sudo apt-get install -f -y  # To fix any missing dependencies
 
         echo "MYODBC_DRIVER_SPEC=/usr/lib/x86_64-linux-gnu/odbc/libmyodbc9w.so" >> $GITHUB_ENV
