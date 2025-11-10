@@ -105,30 +105,12 @@ tables: compose [
         bigint_u "BIGINT UNSIGNED" [0 10 20 30 9223372036854775807]
     ]])
 
-    (spread if is-firebird '[
-        ;
-        ; REAL and FLOAT(20) get these answers in Firebird back if you were
-        ; to put in the rounded values.  It's not that interesting as to why at
-        ; this particular time.
-        ;
-        real "REAL" [
-            -3.4000000953674316
-            -1.2000000476837158
-            0.0
-            5.599999904632568
-            7.800000190734863
-        ]
-        float "FLOAT(20)" [
-            -3.4000000953674316
-            -1.2000000476837158
-            0.0
-            5.599999904632568
-            7.800000190734863
-        ]
-    ] else '[
-        real "REAL" [-3.4 -1.2 0.0 5.6 7.8]
-        float "FLOAT(20)" [-3.4 -1.2 0.0 5.6 7.8]
-    ])
+    ; REAL and FLOAT(20) may not get exactly the double precision answers
+    ; back.  So floating point numbers are compared with tolerance in the
+    ; RESULTS-MATCH? testing below.
+    ;
+    real "REAL" [-3.4 -1.2 0.0 5.6 7.8]
+    float "FLOAT(20)" [-3.4 -1.2 0.0 5.6 7.8]
 
     (spread if is-firebird '[  ; throws in word "precision"
         double "DOUBLE PRECISION" [-3.4 -1.2 0.0 5.6 7.8]
@@ -198,6 +180,30 @@ tables: compose [
     ] else '[
         blob "BLOB(10)" [#{} #{010203} #{DECAFBADCAFE}]
     ])
+]
+
+results-match?: func [return: [logic?] actual [block!] expected [block!]] [
+    if (length of actual) <> (length of expected) [
+        return logical 0
+    ]
+
+    count-up 'i (length of actual) [
+        let a: pick actual i
+        let e: pick expected i
+
+        if (decimal? a) and (decimal? e) [  ; compare with a tolerance
+            if 0.00001 < absolute (a - e) [
+                return logical 0
+            ]
+        ]
+        else [
+            if a <> e [
+                return logical 0
+            ]
+        ]
+    ]
+
+    return logical 1
 ]
 
 mismatches: 0
@@ -304,7 +310,7 @@ for-each [label sqltype content] tables [
 
     print ["=>" mold actual]
 
-    either (sort copy actual) = (sort copy content) [
+    either results-match? actual content [
         print "QUERY MATCHED ORIGINAL DATA"
     ][
         mismatches: me + 1
