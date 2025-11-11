@@ -31,20 +31,10 @@ jobs:
 
   #====# CHECKOUT STEPS #=====================================================#
 
-    # GitHub CI checkout on Windows auto translates LF to CR/LF in files:
-    #
-    # https://github.com/actions/checkout/issues/135
-    #
-    # However, Ren-C is taking the long view on this and prohibiting CR/LF in
-    # source by default.
-    #
-    # https://forum.rebol.info/t/newlina-non-grata/1207
-    # https://forum.rebol.info/t/1264
+    # https://github.com/metaeducation/git-disable-autocrlf-action/
     #
     - name: Disable LF to CRLF Auto Translation In Git
-      run: |
-        git config --global core.autocrlf false
-        git config --global core.eol lf
+      uses: metaeducation/git-disable-autocrlf-action@v1  # Trusted Action
 
 
     # https://github.com/actions/checkout
