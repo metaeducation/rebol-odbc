@@ -206,6 +206,11 @@ sqlform: func [
             "?"
         ]
 
+        tuple?:tied/ [  ; $obj.field
+            append parameters get untie value
+            "?"
+        ]
+
         group?:tied/ [  ; $(expr)
             append parameters eval untie value
             "?"
