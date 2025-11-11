@@ -555,13 +555,21 @@ SQLRETURN ODBC_BindParameter(
     //   https://forum.rebol.info/t/540/4
     //
     SQLSMALLINT c_type = rebUnboxInteger("switch:type @", v, "[",
+        //
+        // We use quasiform ~null~ so it's easier to reify and degrade it.
+        //
+        "word?:quasiform/ [",
+            "if @", v, "= '~null~ [", rebI(SQL_C_DEFAULT), "] else [",
+                "panic -[Legal QUASI-WORD!-parameters: [~null~]]-",
+            "]",
+        "]",
+
         "word! [",
             "switch @", v, "[",
-                "'null [", rebI(SQL_C_DEFAULT), "]",
                 "'true [", rebI(SQL_C_BIT), "]",
                 "'false [", rebI(SQL_C_BIT), "]",
             "] else [",
-                "panic -[Legal WORD!-parameters: [null true false]]-",
+                "panic -[Legal WORD!-parameters: [true false]]-",
             "]",
         "]",
 
@@ -1448,13 +1456,18 @@ DECLARE_NATIVE(INSERT_ODBC)
 // reinterpreted as a Rebol value.  Successive queries for records reuse the
 // buffer for a column.
 //
+// 1. We return a quasiform in the case of nulls so that it can be put in
+//    lists without an error.  This does mean that if people want an actual
+//    null value they will have to DEGRADE it, or otherwise check for the
+//    quasiform.
+//
 Value* ODBC_Column_To_Rebol_Value(
     Column* col,
     Option(SQLPOINTER) allocated,
     SQLLEN len
 ){
     if (len == SQL_NULL_DATA)
-        return nullptr;
+        return rebValue("'~null~");  // expects value can be put in block [1]
 
     switch (col->c_type) {
       case SQL_C_BIT:
