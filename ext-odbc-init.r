@@ -147,10 +147,9 @@ sys.util/make-scheme [
 
 
 sqlform: func [
-    "Helper for producing SQL string from SQL dialect"
+    "Form SQL Dialect as text with ? in parameter spots, $GROUP! may vaporize"
 
-    return: "Formed SQL string with ? in parameter spots, $GROUP! may vaporize"
-        [null? text! rune!]  ; rune won't have spaces around it when rendered
+    return: [<null> text! rune!]  ; rune has no spaces around it when rendered
 
     parameters "Parameter block being gathered"
         [block!]

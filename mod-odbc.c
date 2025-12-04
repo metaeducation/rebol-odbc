@@ -338,7 +338,7 @@ CharColumnEncoding g_char_column_encoding = CHAR_COL_UTF16;
 //
 //  "Set the encoding for CHAR, CHAR(n), VARCHAR(n), LONGVARCHAR fields"
 //
-//      return: []
+//      return: ~
 //      encoding "Currently you have to use UTF-16 for UCS-2"
 //          [~(utf-8 latin-1 utf-16)~]
 //  ]
@@ -366,8 +366,9 @@ DECLARE_NATIVE(ODBC_SET_CHAR_ENCODING)
 //
 //  export open-connection: native [
 //
-//      return: "Object with HDBC handle field initialized"
-//          [object!]
+//  "Returns object with HDBC handle field initialized"
+//
+//      return: [object!]
 //      spec "ODBC connection string, e.g. commonly 'Dsn=DatabaseName'"
 //          [text!]
 //  ]
@@ -861,7 +862,7 @@ SQLRETURN Get_ODBC_Catalog(
     int index;
     for (index = 2; index != 6; ++index) {
         pattern[index - 2] = rebSpellWideOpt(  // returns nullptr if NULL
-            "ensure [null? text!]",
+            "ensure [<null> text!]",
                 "pick ensure block!", block, rebI(index)
         );
     }
@@ -1224,8 +1225,10 @@ void Describe_ODBC_Results(
 //
 //  "Executes SQL statements (prepare on first pass, executes conservatively)"
 //
-//      return: "Row count for row change, column title BLOCK! for selects"
-//          [integer! block!]
+//      return: [
+//          integer!    "Row count for row change"
+//          block!      "Column title BLOCK! for selects"
+//      ]
 //      statement [object!]
 //      sql "Dialect beginning with TABLES, COLUMNS, TYPES, or SQL STRING!"
 //          [block!]
@@ -1274,7 +1277,7 @@ DECLARE_NATIVE(INSERT_ODBC)
         // then prepare a new statement.
         //
         use_cache = rebUnboxLogic(
-            "equal? (first sql) ensure [null? text!] statement.string"
+            "equal? (first sql) ensure [<null> text!] statement.string"
         );
 
         SQLLEN sql_index = 1;
@@ -1409,7 +1412,7 @@ DECLARE_NATIVE(INSERT_ODBC)
         return rebValue("ensure block! statement.titles");
 
     Value* old_columns_value = rebValue(
-        "ensure [null? handle!] statement.columns"
+        "ensure [<null> handle!] statement.columns"
     );
     if (old_columns_value) {
         //
@@ -1633,8 +1636,9 @@ Value* ODBC_Column_To_Rebol_Value(
 //
 //  export copy-odbc: native [
 //
-//      return: "Block of row blocks for selects and catalog functions"
-//          [block!]
+//  "Block of row blocks for selects and catalog functions"
+//
+//      return: [block!]
 //      statement [object!]
 //      :part [integer!]
 //  ]
@@ -1814,7 +1818,7 @@ DECLARE_NATIVE(COPY_ODBC)
 //
 //  export update-odbc: native [
 //
-//      return: []
+//      return: ~
 //      connection [object!]
 //      access [logic?]
 //      commit [logic?]
@@ -1878,7 +1882,7 @@ DECLARE_NATIVE(CLOSE_STATEMENT)
     INCLUDE_PARAMS_OF_CLOSE_STATEMENT;
 
     Value* columns_value = rebValue(
-        "ensure [null? handle!] statement.columns"
+        "ensure [<null> handle!] statement.columns"
     );
     if (columns_value) {
         ColumnList* list = rebUnboxHandle(ColumnList*, columns_value);
@@ -1888,7 +1892,7 @@ DECLARE_NATIVE(CLOSE_STATEMENT)
         rebRelease(columns_value);
     }
 
-    Value* hstmt_value = rebValue("ensure [null? handle!] statement.hstmt");
+    Value* hstmt_value = rebValue("ensure [<null> handle!] statement.hstmt");
     if (hstmt_value) {
         SQLHSTMT hstmt = rebUnboxHandle(SQLHSTMT, hstmt_value);
         assert(hstmt);
@@ -1918,7 +1922,7 @@ DECLARE_NATIVE(CLOSE_CONNECTION)
 {
     INCLUDE_PARAMS_OF_CLOSE_CONNECTION;
 
-    Value* hdbc_value = rebValue("ensure [null? handle!] connection.hdbc");
+    Value* hdbc_value = rebValue("ensure [<null> handle!] connection.hdbc");
     if (not hdbc_value)  // connection was already closed (be tolerant?)
         return rebLogic(false);
 
@@ -1948,7 +1952,7 @@ DECLARE_NATIVE(CLOSE_CONNECTION)
 //
 //  "Start up the ODBC Extension"
 //
-//      return: []
+//      return: ~
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
@@ -1973,7 +1977,7 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Shut down the ODBC Extension"
 //
-//      return: []
+//      return: ~
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)
