@@ -182,9 +182,9 @@ tables: compose [
     ])
 ]
 
-results-match?: func [return: [logic?] actual [block!] expected [block!]] [
+results-match?: func [return: [logic!] actual [block!] expected [block!]] [
     if (length of actual) <> (length of expected) [
-        return logical 0
+        return logical null
     ]
 
     count-up 'i (length of actual) [
@@ -193,17 +193,17 @@ results-match?: func [return: [logic?] actual [block!] expected [block!]] [
 
         if (decimal? a) and (decimal? e) [  ; compare with a tolerance
             if 0.00001 < absolute (a - e) [
-                return logical 0
+                return logical null
             ]
         ]
         else [
             if a <> e [
-                return logical 0
+                return logical null
             ]
         ]
     ]
 
-    return logical 1
+    return logical okay
 ]
 
 mismatches: 0

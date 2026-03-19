@@ -490,7 +490,7 @@ DECLARE_NATIVE(OPEN_CONNECTION)
 //
 //  export /open-statement: native [
 //
-//      return: [logic?]
+//      return: [logic!]
 //      connection [object!]
 //      statement [object!]
 //  ]
@@ -1820,8 +1820,8 @@ DECLARE_NATIVE(COPY_ODBC)
 //
 //      return: ~
 //      connection [object!]
-//      access [logic?]
-//      commit [logic?]
+//      access [logic!]
+//      commit [logic!]
 //  ]
 //
 DECLARE_NATIVE(UPDATE_ODBC)
@@ -1873,7 +1873,7 @@ DECLARE_NATIVE(UPDATE_ODBC)
 //
 //  export /close-statement: native [
 //
-//      return: [logic?]
+//      return: [logic!]
 //      statement [object!]
 //  ]
 //
@@ -1914,7 +1914,7 @@ DECLARE_NATIVE(CLOSE_STATEMENT)
 //
 //  export /close-connection: native [
 //
-//      return: [logic?]
+//      return: [logic!]
 //      connection [object!]
 //  ]
 //

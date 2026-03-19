@@ -24,7 +24,7 @@ Rebol [
 ; copy-odbc: native [statement [object!] length [integer!]]
 ; close-statement: native [statement [object!]]
 ; close-connection: native [connection [object!]]
-; update-odbc: native [connection [object!] access [logic?] commit [logic?]]
+; update-odbc: native [connection [object!] access [logic!] commit [logic!]]
 
 
 database-prototype: context [

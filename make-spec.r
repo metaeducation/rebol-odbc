@@ -17,7 +17,7 @@ Rebol [
 ]
 
 options: [
-    odbc-requires-ltdl [logic?] ()
+    odbc-requires-ltdl [logic!] ()
 ]
 
 use-librebol: 'yes  ; ODBC is a great example of not depending on %sys-core.h !
