@@ -170,7 +170,7 @@ sqlform: func [
             ]
         ]
 
-        comma! [join #"," space]  ; avoid spacing before the comma
+        blank! [join #"," space]  ; avoid spacing before the comma
 
         integer! [form value]
         word! [as text! value]
