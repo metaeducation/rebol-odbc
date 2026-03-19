@@ -69,7 +69,7 @@ tables: compose [
     ; so it would give back 0 and 1, not false and true.  (Firebird has a
     ; distinct boolean type.)
     ;
-    (when is-firebird [spread [
+    (if is-firebird [spread [
         boolean "BOOLEAN" [false true]
     ]])
 
@@ -78,11 +78,11 @@ tables: compose [
     ;
     ; !!! Should this map to BITSET, if it can have a size, vs. WORD! ?
     ;
-    (when not is-firebird [spread [
+    (if not is-firebird [spread [
         bit "BIT" [false true]
     ]])
 
-    (when not is-firebird [spread [  ; Firebird does not have TINYINT
+    (if not is-firebird [spread [  ; Firebird does not have TINYINT
         tinyint_s "TINYINT" [-128 -10 0 10 127]
         tinyint_u "TINYINT UNSIGNED" [0 10 20 30 255]
     ]])
@@ -91,7 +91,7 @@ tables: compose [
     integer_s "INT" [-2147483648 -10 0 10 2147483647]
     bigint_s "BIGINT" [-9223372036854775808 -10 0 10 9223372036854775807]
 
-    (when not is-firebird [spread [  ; Firebird lacks unsigned types
+    (if not is-firebird [spread [  ; Firebird lacks unsigned types
         smallint_u "SMALLINT UNSIGNED" [0 10 20 30 65535]
         integer_u "INT UNSIGNED" [0 10 20 30 4294967295]
 
@@ -142,7 +142,7 @@ tables: compose [
 
     char "CHAR(3)" ["abc" "def" "ghi"]
     varchar "VARCHAR(10)" ["" "abc" "defgh" "jklmnopqrs" "zxy'vu" "rst''klm"]
-    (when is-sqlite [spread [
+    (if is-sqlite [spread [
         ;
         ; LONGVARCHAR is considered a "legacy type", and not supported by most
         ; modern SQLs, but it is in Sqlite.
@@ -168,7 +168,7 @@ tables: compose [
     ; error.  This creates nonsense on the round trip, because the ODBC layer
     ; will perceive the column as a string.  Don't use BINARY in Firebird ODBC.
     ;
-    (when not is-firebird [spread [
+    (if not is-firebird [spread [
         binary "BINARY(3)" [#{000000} #{010203} #{FFFFFF}]
         varbinary "VARBINARY(10)" [#{} #{010203} #{DECAFBADCAFE}]
     ]])

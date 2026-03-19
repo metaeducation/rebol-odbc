@@ -96,7 +96,7 @@ Example: splicing a table name safely (WORD!):
 
 Example: splicing a SQL fragment (BLOCK!):
 
-    primary: if condition [[PRIMARY KEY]]
+    primary: all [condition [PRIMARY KEY]]
     odbc-execute [
         CREATE TABLE logs (
             id INTEGER AUTO_INCREMENT $[opt primary],

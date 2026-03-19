@@ -223,7 +223,7 @@ sqlform: func [
                 safe: null
             ]
             let ^product: eval value
-            if ghostly? ^product [
+            if any-void? ^product [
                 return null
             ]
             if safe and (text? product) [
