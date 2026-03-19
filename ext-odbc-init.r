@@ -80,8 +80,8 @@ sys.util/make-scheme [
 
             let spec
             port.locals: open-connection case [
-                text? opt spec: select port.spec 'target [spec]
-                text? opt spec: select port.spec 'host [unspaced ["dsn=" spec]]
+                text? cond spec: select port.spec 'target [spec]
+                text? cond spec: select port.spec 'host [unspaced ["dsn=" spec]]
 
                 cause-error 'access 'invalid-spec port.spec
             ]
@@ -165,7 +165,7 @@ sqlform: func [
                         if new-line? pos [keep newline]
                     ]
                     is-first: null
-                    keep opt sqlform parameters inside value pos.1
+                    keep cond sqlform parameters inside value pos.1
                 ]
             ]
         ]
@@ -193,7 +193,7 @@ sqlform: func [
                 keep "("
                 for-next 'pos value [
                     if new-line? pos [keep newline]
-                    keep opt sqlform parameters inside value pos.1
+                    keep cond sqlform parameters inside value pos.1
                 ]
                 if new-line? tail of value [keep newline]
                 keep ")"
