@@ -334,7 +334,7 @@ CharColumnEncoding g_char_column_encoding = CHAR_COL_UTF16;
 
 
 //
-//  export odbc-set-char-encoding: native [
+//  export /odbc-set-char-encoding: native [
 //
 //  "Set the encoding for CHAR, CHAR(n), VARCHAR(n), LONGVARCHAR fields"
 //
@@ -364,7 +364,7 @@ DECLARE_NATIVE(ODBC_SET_CHAR_ENCODING)
 
 
 //
-//  export open-connection: native [
+//  export /open-connection: native [
 //
 //  "Returns object with HDBC handle field initialized"
 //
@@ -488,7 +488,7 @@ DECLARE_NATIVE(OPEN_CONNECTION)
 
 
 //
-//  export open-statement: native [
+//  export /open-statement: native [
 //
 //      return: [logic?]
 //      connection [object!]
@@ -1221,7 +1221,7 @@ void Describe_ODBC_Results(
 
 
 //
-//  export insert-odbc: native [
+//  export /insert-odbc: native [
 //
 //  "Executes SQL statements (prepare on first pass, executes conservatively)"
 //
@@ -1634,7 +1634,7 @@ Value* ODBC_Column_To_Rebol_Value(
 
 
 //
-//  export copy-odbc: native [
+//  export /copy-odbc: native [
 //
 //  "Block of row blocks for selects and catalog functions"
 //
@@ -1816,7 +1816,7 @@ DECLARE_NATIVE(COPY_ODBC)
 
 
 //
-//  export update-odbc: native [
+//  export /update-odbc: native [
 //
 //      return: ~
 //      connection [object!]
@@ -1871,7 +1871,7 @@ DECLARE_NATIVE(UPDATE_ODBC)
 
 
 //
-//  export close-statement: native [
+//  export /close-statement: native [
 //
 //      return: [logic?]
 //      statement [object!]
@@ -1912,7 +1912,7 @@ DECLARE_NATIVE(CLOSE_STATEMENT)
 
 
 //
-//  export close-connection: native [
+//  export /close-connection: native [
 //
 //      return: [logic?]
 //      connection [object!]
@@ -1948,7 +1948,7 @@ DECLARE_NATIVE(CLOSE_CONNECTION)
 
 
 //
-//  startup*: native [
+//  /startup*: native [
 //
 //  "Start up the ODBC Extension"
 //
@@ -1973,7 +1973,7 @@ DECLARE_NATIVE(STARTUP_P)
 
 
 //
-//  shutdown*: native [
+//  /shutdown*: native [
 //
 //  "Shut down the ODBC Extension"
 //

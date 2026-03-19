@@ -40,7 +40,7 @@ statement-prototype: context [
     columns: null
 ]
 
-export odbc-statement-of: func [
+export /odbc-statement-of: func [
     "Get a statement port from a connection port"
     return: [port!]
     port [port!]
