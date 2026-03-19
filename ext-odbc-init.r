@@ -250,8 +250,7 @@ sqlform: func [
                 panic ["Bad type in $[expr] usage"]
             ]
         ]
-    ]
-    else [
+    ] else [
         panic ["Invalid type for ODBC-EXECUTE dialect:" mold:limit value 60]
     ]
 ]

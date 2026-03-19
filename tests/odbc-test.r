@@ -195,8 +195,7 @@ results-match?: func [return: [logic!] actual [block!] expected [block!]] [
             if 0.00001 < absolute (a - e) [
                 return logical null
             ]
-        ]
-        else [
+        ] else [
             if a <> e [
                 return logical null
             ]
@@ -331,8 +330,7 @@ for-each [label sqltype content] tables [
 ;
 if leave-connected? [
     print "!!! --LEAVE-CONNECTED, ODBC CONNECTION LIVE DURING SHUTDOWN !!!"
-]
-else [
+] else [
     close statement
     close connection
 ]
