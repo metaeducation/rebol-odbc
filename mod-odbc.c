@@ -338,7 +338,7 @@ CharColumnEncoding g_char_column_encoding = CHAR_COL_UTF16;
 //
 //  "Set the encoding for CHAR, CHAR(n), VARCHAR(n), LONGVARCHAR fields"
 //
-//      return: ~
+//      return: [trash!]
 //      encoding "Currently you have to use UTF-16 for UCS-2"
 //          [~(utf-8 latin-1 utf-16)~]
 //  ]
@@ -359,7 +359,7 @@ DECLARE_NATIVE(ODBC_SET_CHAR_ENCODING)
         "]"
     ));
 
-    return "~";
+    return "~<?>~";
 }
 
 
@@ -1818,7 +1818,7 @@ DECLARE_NATIVE(COPY_ODBC)
 //
 //  export /update-odbc: native [
 //
-//      return: ~
+//      return: [trash!]
 //      connection [object!]
 //      access [logic!]
 //      commit [logic!]
@@ -1866,7 +1866,7 @@ DECLARE_NATIVE(UPDATE_ODBC)
     if (not SQL_SUCCEEDED(rc))
         return rebDelegate("panic", Error_ODBC_Dbc(hdbc));
 
-    return "~";
+    return "~<?>~";
 }
 
 
@@ -1952,7 +1952,7 @@ DECLARE_NATIVE(CLOSE_CONNECTION)
 //
 //  "Start up the ODBC Extension"
 //
-//      return: ~
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
@@ -1968,7 +1968,7 @@ DECLARE_NATIVE(STARTUP_P)
     assert(g_all_connections == nullptr);
     assert(g_all_columnlists == nullptr);
 
-    return "~";
+    return "~<?>~";
 }
 
 
@@ -1977,7 +1977,7 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Shut down the ODBC Extension"
 //
-//      return: ~
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)
@@ -2014,5 +2014,5 @@ DECLARE_NATIVE(SHUTDOWN_P)
         henv = SQL_NULL_HANDLE;
     }
 
-    return "~";
+    return "~<?>~";
 }
