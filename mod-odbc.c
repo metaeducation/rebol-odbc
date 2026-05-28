@@ -48,7 +48,7 @@
 #endif
 
 #include "assert-fix.h"
-#include "needful/needful.h"
+#include "needful.h"
 #include "c-extras.h"  // for EXTERN_C, nullptr, etc.
 
 
@@ -1569,7 +1569,7 @@ Value* ODBC_Column_To_Rebol_Value(
                 stamp->hour * 3600 + stamp->minute * 60 + stamp->second
             ),  // seconds
             rebI(fraction),  // billionths of a second (nanoseconds)
-            "()",  // timezone (none)  !!! better API way to make voids?
+            "none",  // timezone (none)
         ")"); }
 
     // SQL_BINARY, SQL_VARBINARY, and SQL_LONGVARBINARY were all requested

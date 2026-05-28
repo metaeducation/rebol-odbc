@@ -187,7 +187,7 @@ results-match?: func [return: [logic!] actual [block!] expected [block!]] [
         return logical null
     ]
 
-    count-up 'i (length of actual) [
+    count-up i (length of actual) [
         let a: pick actual i
         let e: pick expected i
 
