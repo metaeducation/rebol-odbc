@@ -6,14 +6,14 @@ platforms as well:
 
 <https://en.wikipedia.org/wiki/Open_Database_Connectivity>
 
-This extension provides ODBC interoperability with the **[Ren-C][1]** branch
+This extension provides ODBC interoperability with the **[Revolt][1]** branch
 of Rebol.  There's a basic translation of language value types into
 corresponding SQL (e.g. INTEGER!, TEXT!, or the WORD! of `true` or `false`
 to a BOOLEAN).
 
 Best of all, it includes a higher-level **[ODBC Dialect](#the-odbc-dialect)**!
 
-[1]: https://github.com/metaeducation/ren-c
+[1]: https://github.com/metaeducation/revolt
 
 
 ## Parameterized Queries
@@ -115,7 +115,7 @@ If you try to splice a TEXT!, the protection will block it.  For example:
     ; Error: TEXT! not allowed in $[...], use a WORD!, BLOCK!, or $[<!> ...]
 
 But sometimes there are legitimate needs to splice a string that can't be
-represented as a Ren-C value (for example, a type like `"NUMERIC(18,2)"`).
+represented as a Revolt value (for example, a type like `"NUMERIC(18,2)"`).
 In these cases you can put a `<!>` TAG! as the first item in the `$[...]`
 block as an explicit signal that you know what you're doing:
 
@@ -128,7 +128,7 @@ block as an explicit signal that you know what you're doing:
 
     ; => "CREATE TABLE logs (amount NUMERIC(18,2))"
 
-This dialect demonstrates the power of Ren-C's homoiconic, symbolic source --
+This dialect demonstrates the power of Revolt's homoiconic, symbolic source --
 where code and data share structure -- to enable robust and intuitive SQL
 composition.  It's clear when when you are safely parameterizing values,
 safely splicing identifiers or fragments, or intentionally bypassing safety

@@ -15,7 +15,7 @@ on:
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 
-# We use bash by default in Ren-C workflows, even on Windows
+# We use bash by default in Revolt workflows, even on Windows
 #
 defaults:
   run:

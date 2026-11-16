@@ -2,13 +2,13 @@
 //  file: %mod-odbc.c
 //  summary: "Interface from REBOL3 to ODBC"
 //  section: extension
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  homepage: https://github.com/metaeducation/ren-c/
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
+//  homepage: https://github.com/metaeducation/revolt/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2010-2011 Christian Ensel
-// Copyright 2017-2025 Ren-C Open Source Contributors
+// Copyright 2017-2025 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -309,7 +309,7 @@ static void Connection_Handle_Cleaner(void* p, size_t length) {
 // as BLOB, which limits their searchability from within the SQL language
 // itself.  NoSQL databases have been edging into this space as a result.
 //
-// Since Ren-C makes the long bet on UTF-8, it started out by storing and
+// Since Revolt makes the long bet on UTF-8, it started out by storing and
 // fetching UTF-8 from CHAR-based fields.  But some systems (e.g. Excel) seem
 // to not be returning UTF-8 when you request a CHAR() field via SQL_C_CHAR:
 //
@@ -388,7 +388,7 @@ DECLARE_NATIVE(OPEN_CONNECTION)
     //  UCS-2 encoded. iODBC I believe uses wchar_t (this is based on
     //  attempting to support iODBC in DBD::ODBC)"
     //
-    // Ren-C supports the full unicode range of codepoints, so if codepoints
+    // Revolt supports the full unicode range of codepoints, so if codepoints
     // bigger than 0xFFFF are used then they are encoded as surrogate pairs.
     // UCS-2 constraint can be added to error rather than tolerate this.
     //
@@ -1790,7 +1790,7 @@ DECLARE_NATIVE(COPY_ODBC)
                 break;
 
               case SQL_NO_DATA:
-                assert("!Got back SQL_NO_DATA from SQLGetData()");
+                assert_msg("Got back SQL_NO_DATA from SQLGetData()");
                 goto no_more_data;
 
               case SQL_ERROR:

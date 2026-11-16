@@ -8,7 +8,7 @@ Rebol [
 
     rights: [
         "Copyright (C) 2010-2011 Christian Ensel" (MIT License)
-        "Copyright (C) 2017-2019 Ren-C Open Source Contributors" (Apache)
+        "Copyright (C) 2017-2019 Revolt Open Source Contributors" (Apache)
     ]
 
     license: "Apache 2.0"
